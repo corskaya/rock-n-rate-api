@@ -8,7 +8,9 @@ router.post("/register", async (req, res) => {
 
     res.status(201).send(user);
   } catch (e) {
-    res.status(400).send(e.message);
+    res.status(400).json({
+      message: e.message,
+    });
   }
 });
 
@@ -20,7 +22,9 @@ router.post("/login", async (req, res) => {
 
     res.status(200).send({ user, token });
   } catch (e) {
-    res.status(400).send(e.message);
+    res.status(400).json({
+      message: e.message,
+    });
   }
 });
 
