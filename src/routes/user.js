@@ -18,8 +18,8 @@ router.post("/register", validateRegister, async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findByCredentials(email, password);
+    const { usernameOrEmail, password } = req.body;
+    const user = await User.findByCredentials(usernameOrEmail, password);
     const token = await user.generateAuthToken();
 
     res.status(200).send({ user, token });

@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
-const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 const Role = Object.freeze({
   Admin: "Admin",
+  Moderator: "Moderator",
   User: "User",
 });
 
@@ -15,10 +15,6 @@ const UserSchema = new mongoose.Schema(
       required: true,
       trim: true,
       unique: true,
-      validate(value) {
-        if (!validator.isEmail(value))
-          throw new Error("Please enter a valid email");
-      },
     },
     username: {
       type: String,
@@ -56,17 +52,23 @@ UserSchema.methods.generateAuthToken = async function () {
   return token;
 };
 
-UserSchema.statics.findByCredentials = async (email, password) => {
-  const user = await User.findOne({ email });
+UserSchema.statics.findByCredentials = async (usernameOrEmail, password) => {
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmail = emailPattern.test(usernameOrEmail);
 
-  if (!user || user.isDeleted) {
-    throw new Error("Invalid email or password");
+  const user = isEmail
+    ? await User.findOne({ email: usernameOrEmail })
+    : await User.findOne({ username: usernameOrEmail });
+
+  if (!user) {
+    throw new Error("Invalid username or password");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new Error("Invalid email or password");
+    throw new Error("Invalid username or password");
   }
+
   return user;
 };
 
