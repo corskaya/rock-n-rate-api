@@ -29,18 +29,6 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       require: true,
-      validate(value) {
-        if (!validator.isLength(value, { min: 8, max: 16 }))
-          throw new Error("Password length must be 8-16 characters");
-      },
-    },
-    name: {
-      type: String,
-      trim: true,
-    },
-    surname: {
-      type: String,
-      trim: true,
     },
     role: {
       type: String,

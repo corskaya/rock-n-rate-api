@@ -10,7 +10,7 @@ const authenticate = async (req, res, next) => {
     });
 
     if (!user) {
-      throw new Error();
+      throw new Error("Please login");
     }
 
     req.token = token;
@@ -20,7 +20,7 @@ const authenticate = async (req, res, next) => {
   } catch (e) {
     res.status(401).json({
       status: "Failed",
-      message: "Please login",
+      message: e.message,
     });
   }
 };

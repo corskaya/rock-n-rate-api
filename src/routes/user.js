@@ -1,9 +1,11 @@
 const router = require("express").Router();
 const User = require("../db/models/User");
+const validateRegister = require("../middlewares/validateRegister");
 
-router.post("/register", async (req, res) => {
+router.post("/register", validateRegister, async (req, res) => {
   try {
-    const user = new User(req.body);
+    const { username, email, password } = req.body;
+    const user = new User({ email, username, password });
     await user.save();
 
     res.status(201).send(user);
