@@ -1,4 +1,6 @@
-const validateRegister = (req, res, next) => {
+const User = require("../db/models/User");
+
+const validateRegister = async (req, res, next) => {
   try {
     const { username, email, password, confirmPassword } = req.body;
     const usernamePattern = /^[a-zA-Z0-9_]+$/;
@@ -20,6 +22,18 @@ const validateRegister = (req, res, next) => {
 
     if (password !== confirmPassword) {
       throw new Error("The password confirmation does not match");
+    }
+
+    const usernameTaken = await User.findOne({ username });
+
+    if (usernameTaken) {
+      throw new Error("Username already taken");
+    }
+
+    const emailTaken = await User.findOne({ email });
+
+    if (emailTaken) {
+      throw new Error("E-mail already registered");
     }
 
     next();
