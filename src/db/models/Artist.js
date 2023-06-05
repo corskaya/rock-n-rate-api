@@ -7,9 +7,6 @@ const ArtistSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    imageURL: {
-      type: String,
-    },
     rating: {
       type: Number,
     },
@@ -26,6 +23,12 @@ const ArtistSchema = new mongoose.Schema(
     isConfirmed: {
       type: Boolean,
       default: false,
+    },
+    image: {
+      type: String,
+    },
+    cloudinaryId: {
+      type: String,
     },
   },
   { timestamps: true }

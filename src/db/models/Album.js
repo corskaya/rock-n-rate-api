@@ -8,9 +8,6 @@ const AlbumSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    imageURL: {
-      type: String,
-    },
     rating: {
       type: Number,
     },
@@ -36,6 +33,12 @@ const AlbumSchema = new mongoose.Schema(
     releaseDate: {
       type: Date,
       required: true,
+    },
+    image: {
+      type: String,
+    },
+    cloudinaryId: {
+      type: String,
     },
   },
   { timestamps: true }
