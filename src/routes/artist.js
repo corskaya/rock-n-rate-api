@@ -28,6 +28,9 @@ router.post("/", authenticate, upload.single("image"), async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const artists = await Artist.find({});
+    artists.forEach((artist) => {
+      artist.rating = artist.rating.toFixed(1);
+    });
 
     res.status(200).send(artists);
   } catch (e) {
