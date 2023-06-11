@@ -49,6 +49,9 @@ const ArtistSchema = new mongoose.Schema(
     cloudinaryId: {
       type: String,
     },
+    foundationYear: {
+      type: Number,
+    },
     ratings: [RatingSchema],
   },
   { timestamps: true }
