@@ -15,10 +15,10 @@ app.use("/api/v1", routes);
 
 if (process.env.PORT) {
   app.listen(process.env.PORT, () => {
-    console.log(`Music Ratings API Started up at port ${process.env.PORT}`);
+    console.log(`Rock'n Rate API Started up at port ${process.env.PORT}`);
   });
 } else {
   app.listen(3000, () => {
-    console.log(`Music Ratings API Started up at port 3000`);
+    console.log(`Rock'n Rate API Started up at port 3000`);
   });
 }

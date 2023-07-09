@@ -6,7 +6,7 @@ router.use("/user", user.router);
 router.use("/artist", artist.router);
 
 router.get("/", (req, res) => {
-  res.send("Music Ratings API running...");
+  res.send("Rock'n Rate API running...");
 });
 
 module.exports = router;

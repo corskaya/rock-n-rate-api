@@ -1,7 +1,7 @@
 {
-  "name": "music-ratings-api",
+  "name": "rockn-rate-api",
   "version": "1.0.0",
-  "description": "music ratings api",
+  "description": "rocknrate api",
   "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
