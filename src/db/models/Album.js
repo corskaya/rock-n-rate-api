@@ -29,12 +29,9 @@ const AlbumSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    genre: {
-      type: String,
-      required: true,
-    },
-    subGenres: {
+    genres: {
       type: [String],
+      required: true,
     },
     artistRefObjectId: {
       type: ObjectId,

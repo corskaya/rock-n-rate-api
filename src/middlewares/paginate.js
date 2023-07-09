@@ -7,7 +7,6 @@ const paginate = async (req, res, next) => {
       limit = 10,
       searchTerm = "",
       genre = "All",
-      subGenre = "All",
       rating = 0,
       year = "All",
       orderBy = "Latest",
@@ -24,8 +23,7 @@ const paginate = async (req, res, next) => {
       foundationYear: { $gte: gteYear, $lte: lteYear },
       rating: { $gte: rating },
     };
-    if (genre !== "All") query.genre = genre;
-    if (subGenre !== "All") query.subGenres = { $in: [subGenre] };
+    if (genre !== "All") query.genres = { $in: [genre] };
 
     let sortBy = "createdAt";
     if (orderBy === "Year") sortBy = "foundationYear";

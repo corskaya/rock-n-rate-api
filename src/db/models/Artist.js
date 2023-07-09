@@ -32,12 +32,9 @@ const ArtistSchema = new mongoose.Schema(
     about: {
       type: String,
     },
-    genre: {
-      type: String,
-      required: true,
-    },
-    subGenres: {
+    genres: {
       type: [String],
+      required: true,
     },
     isConfirmed: {
       type: Boolean,
