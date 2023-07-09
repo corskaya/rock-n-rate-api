@@ -47,4 +47,18 @@ router.get("/", paginate, async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const artist = await Artist.findOne({ _id: id });
+    artist.rating = artist.rating.toFixed(1);
+
+    res.status(200).send({ artist });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 module.exports = { router };
