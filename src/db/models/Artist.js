@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const genres = require("../../constants/genres");
 const { ObjectId } = mongoose.Schema.Types;
 
 const RatingSchema = new mongoose.Schema(
@@ -35,6 +36,7 @@ const ArtistSchema = new mongoose.Schema(
     genres: {
       type: [String],
       required: true,
+      enum: genres,
     },
     isConfirmed: {
       type: Boolean,

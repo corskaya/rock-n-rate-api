@@ -61,4 +61,24 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.get("/similarArtists/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const artist = await Artist.findOne({ _id: id });
+
+    const similarArtists = await Artist.find({
+      _id: { $ne: artist._id },
+      genres: { $in: artist.genres },
+    })
+      .sort({ genres: -1 })
+      .limit(4);
+
+    res.status(200).send({ similarArtists });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 module.exports = { router };
