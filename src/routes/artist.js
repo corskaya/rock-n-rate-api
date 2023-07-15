@@ -81,4 +81,31 @@ router.get("/similarArtists/:id", async (req, res) => {
   }
 });
 
+router.post("/rate/:id", authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating } = req.body;
+    const artist = await Artist.findOne({ _id: id });
+
+    const existingRatingIndex = artist.ratings.findIndex(
+      (rating) => rating.userId.toString() === req.user._id.toString()
+    );
+
+    if (existingRatingIndex !== -1) {
+      artist.ratings[existingRatingIndex].rating = rating;
+    } else {
+      artist.ratings.push({ userId: req.user._id, rating });
+    }
+
+    artist.updateRating();
+    await artist.save();
+
+    res.status(200).send({ artist });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 module.exports = { router };

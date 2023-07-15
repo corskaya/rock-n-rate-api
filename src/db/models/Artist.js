@@ -16,7 +16,7 @@ const RatingSchema = new mongoose.Schema(
       max: 10,
     },
   },
-  { timestamps: true }
+  { timestamps: true, _id: false }
 );
 
 const ArtistSchema = new mongoose.Schema(
