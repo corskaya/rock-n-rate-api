@@ -4,27 +4,34 @@ const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
 const paginate = require("../middlewares/paginate");
+const identifyUser = require("../middlewares/identifyUser");
 
-router.post("/", authenticate, upload.single("image"), async (req, res) => {
-  try {
-    const artistInfo = JSON.parse(req.body.artistInfo);
-    const imageResult = await cloudinary.uploader.upload(req.file.path);
+router.post(
+  "/",
+  identifyUser,
+  authenticate,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const artistInfo = JSON.parse(req.body.artistInfo);
+      const imageResult = await cloudinary.uploader.upload(req.file.path);
 
-    const artist = new Artist({
-      ...artistInfo,
-      image: imageResult.secure_url,
-      cloudinaryId: imageResult.public_id,
-    });
-    await artist.save();
+      const artist = new Artist({
+        ...artistInfo,
+        image: imageResult.secure_url,
+        cloudinaryId: imageResult.public_id,
+      });
+      await artist.save();
 
-    res.status(201).send(artist);
-  } catch (e) {
-    console.log(e);
-    res.status(400).json({
-      message: e.message,
-    });
+      res.status(201).send(artist);
+    } catch (e) {
+      console.log(e);
+      res.status(400).json({
+        message: e.message,
+      });
+    }
   }
-});
+);
 
 router.get("/", paginate, async (req, res) => {
   try {
@@ -47,11 +54,16 @@ router.get("/", paginate, async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", identifyUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const artist = await Artist.findOne({ _id: id });
-    artist.rating = artist.rating.toFixed(1);
+    const artist = await Artist.findOne({ _id: id }).lean();
+    const relevantUser = artist.ratings.find(
+      (rating) => rating.userId.toString() === req.user?._id.toString()
+    );
+
+    artist.ratingOfRelevantUser = relevantUser?.rating;
+    artist.rating = +artist.rating.toFixed(1);
 
     res.status(200).send({ artist });
   } catch (e) {
@@ -81,7 +93,7 @@ router.get("/similarArtists/:id", async (req, res) => {
   }
 });
 
-router.post("/rate/:id", authenticate, async (req, res) => {
+router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { rating } = req.body;
@@ -107,5 +119,30 @@ router.post("/rate/:id", authenticate, async (req, res) => {
     });
   }
 });
+
+router.delete(
+  "/removeRating/:id",
+  identifyUser,
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = await Artist.findOne({ _id: id });
+
+      artist.ratings = artist.ratings.filter(
+        (rating) => rating.userId.toString() !== req.user._id.toString()
+      );
+
+      artist.updateRating();
+      await artist.save();
+
+      res.status(200).send({ artist });
+    } catch (e) {
+      res.status(400).json({
+        message: e.message,
+      });
+    }
+  }
+);
 
 module.exports = { router };
