@@ -3,7 +3,7 @@ const Artist = require("../db/models/Artist");
 const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
-const paginate = require("../middlewares/paginate");
+const paginateArtists = require("../middlewares/paginateArtists");
 const identifyUser = require("../middlewares/identifyUser");
 
 router.post(
@@ -25,7 +25,6 @@ router.post(
 
       res.status(201).send(artist);
     } catch (e) {
-      console.log(e);
       res.status(400).json({
         message: e.message,
       });
@@ -33,7 +32,7 @@ router.post(
   }
 );
 
-router.get("/", paginate, async (req, res) => {
+router.get("/", paginateArtists, async (req, res) => {
   try {
     const artists = await Artist.find(req.find)
       .sort(req.sort)
@@ -111,6 +110,9 @@ router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
 
     artist.updateRating();
     await artist.save();
+
+    artist._doc.ratingOfRelevantUser = rating;
+    artist.rating = +artist.rating.toFixed(1);
 
     res.status(200).send({ artist });
   } catch (e) {

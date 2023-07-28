@@ -1,6 +1,6 @@
 const moment = require("moment");
 
-const paginate = async (req, res, next) => {
+const paginateAlbums = async (req, res, next) => {
   try {
     let {
       page = 1,
@@ -15,18 +15,25 @@ const paginate = async (req, res, next) => {
     page = Number(page) - 1;
     limit = Number(limit);
     rating = Number(rating);
-    gteYear = year === "All" ? 1900 : Number(year.split("-")[0]);
-    lteYear = year === "All" ? moment().year() : Number(year.split("-")[1]);
+    gteYear =
+      year === "All"
+        ? moment("1900-01-01")
+        : moment(Number(`${year.split("-")[0]}-01-01`));
+    lteYear =
+      year === "All" ? moment() : moment(Number(`${year.split("-")[1]}-01-01`));
 
     const query = {
-      name: { $regex: searchTerm, $options: "i" },
-      foundationYear: { $gte: gteYear, $lte: lteYear },
+      $or: [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { artistRefName: { $regex: searchTerm, $options: "i" } },
+      ],
+      releaseDate: { $gte: gteYear, $lte: lteYear },
       rating: { $gte: rating },
     };
     if (genre !== "All") query.genres = { $in: [genre] };
 
     let sortBy = "createdAt";
-    if (orderBy === "Year") sortBy = "foundationYear";
+    if (orderBy === "Year") sortBy = "releaseDate";
     if (orderBy === "Rating") sortBy = "rating";
     let sortOrder = orderBy === "Oldest" ? 1 : -1;
 
@@ -44,4 +51,4 @@ const paginate = async (req, res, next) => {
   }
 };
 
-module.exports = paginate;
+module.exports = paginateAlbums;
