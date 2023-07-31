@@ -8,6 +8,7 @@ const genres = [
   "Avant-garde metal",
   "Beat music",
   "Black metal",
+  "Blues rock",
   "Canterbury scene",
   "Celtic metal",
   "Celtic punk",
