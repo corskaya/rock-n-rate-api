@@ -30,6 +30,9 @@ const AlbumSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    about: {
+      type: String,
+    },
     genres: {
       type: [String],
       required: true,
