@@ -38,98 +38,98 @@ router.get("/", paginateSongs, async (req, res) => {
   }
 });
 
-// router.get("/:id", identifyUser, async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const album = await Album.findOne({ _id: id }).lean();
-//     const relevantUser = album.ratings.find(
-//       (rating) => rating.userId.toString() === req.user?._id.toString()
-//     );
+router.get("/:id", identifyUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const song = await Song.findOne({ _id: id }).lean();
+    const relevantUser = song.ratings.find(
+      (rating) => rating.userId.toString() === req.user?._id.toString()
+    );
 
-//     album.ratingOfRelevantUser = relevantUser?.rating;
-//     album.rating = +album.rating.toFixed(1);
+    song.ratingOfRelevantUser = relevantUser?.rating;
+    song.rating = +song.rating.toFixed(1);
 
-//     res.status(200).send({ album });
-//   } catch (e) {
-//     res.status(400).json({
-//       message: e.message,
-//     });
-//   }
-// });
+    res.status(200).send({ song });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
 
-// router.get("/similarAlbums/:id", async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const album = await Album.findOne({ _id: id });
+router.get("/similarSongs/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const song = await Song.findOne({ _id: id });
 
-//     const similarAlbums = await Album.find({
-//       _id: { $ne: album._id },
-//       genres: { $in: album.genres },
-//     })
-//       .sort({ genres: -1 })
-//       .limit(4);
+    const similarSongs = await Song.find({
+      _id: { $ne: song._id },
+      genres: { $in: song.genres },
+    })
+      .sort({ genres: -1 })
+      .limit(4);
 
-//     res.status(200).send({ similarAlbums });
-//   } catch (e) {
-//     res.status(400).json({
-//       message: e.message,
-//     });
-//   }
-// });
+    res.status(200).send({ similarSongs });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
 
-// router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { rating } = req.body;
-//     const album = await Album.findOne({ _id: id });
+router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating } = req.body;
+    const song = await Song.findOne({ _id: id });
 
-//     const existingRatingIndex = album.ratings.findIndex(
-//       (rating) => rating.userId.toString() === req.user._id.toString()
-//     );
+    const existingRatingIndex = song.ratings.findIndex(
+      (rating) => rating.userId.toString() === req.user._id.toString()
+    );
 
-//     if (existingRatingIndex !== -1) {
-//       album.ratings[existingRatingIndex].rating = rating;
-//     } else {
-//       album.ratings.push({ userId: req.user._id, rating });
-//     }
+    if (existingRatingIndex !== -1) {
+      song.ratings[existingRatingIndex].rating = rating;
+    } else {
+      song.ratings.push({ userId: req.user._id, rating });
+    }
 
-//     album.updateRating();
-//     await album.save();
+    song.updateRating();
+    await song.save();
 
-//     album._doc.ratingOfRelevantUser = rating;
-//     album.rating = +album.rating.toFixed(1);
+    song._doc.ratingOfRelevantUser = rating;
+    song.rating = +song.rating.toFixed(1);
 
-//     res.status(200).send({ album });
-//   } catch (e) {
-//     res.status(400).json({
-//       message: e.message,
-//     });
-//   }
-// });
+    res.status(200).send({ song });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
 
-// router.delete(
-//   "/removeRating/:id",
-//   identifyUser,
-//   authenticate,
-//   async (req, res) => {
-//     try {
-//       const { id } = req.params;
-//       const album = await Album.findOne({ _id: id });
+router.delete(
+  "/removeRating/:id",
+  identifyUser,
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const song = await Song.findOne({ _id: id });
 
-//       album.ratings = album.ratings.filter(
-//         (rating) => rating.userId.toString() !== req.user._id.toString()
-//       );
+      song.ratings = song.ratings.filter(
+        (rating) => rating.userId.toString() !== req.user._id.toString()
+      );
 
-//       album.updateRating();
-//       await album.save();
+      song.updateRating();
+      await song.save();
 
-//       res.status(200).send({ album });
-//     } catch (e) {
-//       res.status(400).json({
-//         message: e.message,
-//       });
-//     }
-//   }
-// );
+      res.status(200).send({ song });
+    } catch (e) {
+      res.status(400).json({
+        message: e.message,
+      });
+    }
+  }
+);
 
 module.exports = { router };
