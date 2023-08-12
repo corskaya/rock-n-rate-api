@@ -39,20 +39,35 @@ const SongSchema = new mongoose.Schema(
       type: ObjectId,
       required: true,
     },
+    artistRefName: {
+      type: String,
+      required: true,
+    },
     albumRefObjectId: {
       type: ObjectId,
+      required: true,
+    },
+    albumRefName: {
+      type: String,
       required: true,
     },
     isConfirmed: {
       type: Boolean,
       default: false,
     },
+    releaseDate: {
+      type: Date,
+      required: true,
+    },
+    image: {
+      type: String,
+    },
     ratings: [RatingSchema],
   },
   { timestamps: true }
 );
 
-ArtistSchema.methods.updateRating = function () {
+SongSchema.methods.updateRating = function () {
   if (this.ratings.length === 0) {
     this.rating = 0;
   } else {
