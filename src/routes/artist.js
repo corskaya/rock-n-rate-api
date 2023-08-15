@@ -53,6 +53,34 @@ router.get("/", paginateArtists, async (req, res) => {
   }
 });
 
+router.get("/mostRatedArtists", async (req, res) => {
+  try {
+    const mostRatedArtists = await Artist.aggregate([
+      {
+        $addFields: {
+          numRatings: { $size: "$ratings" },
+        },
+      },
+      {
+        $sort: { numRatings: -1 },
+      },
+      {
+        $limit: 4,
+      },
+    ]);
+
+    mostRatedArtists.forEach((artist) => {
+      artist.rating = artist.rating.toFixed(1);
+    });
+
+    res.status(200).send({ mostRatedArtists });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 router.get("/:id", identifyUser, async (req, res) => {
   try {
     const { id } = req.params;
