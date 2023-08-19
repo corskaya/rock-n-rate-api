@@ -6,32 +6,6 @@ const cloudinary = require("../utils/cloudinary");
 const paginateArtists = require("../middlewares/paginateArtists");
 const identifyUser = require("../middlewares/identifyUser");
 
-router.post(
-  "/",
-  identifyUser,
-  authenticate,
-  upload.single("image"),
-  async (req, res) => {
-    try {
-      const artistInfo = JSON.parse(req.body.artistInfo);
-      const imageResult = await cloudinary.uploader.upload(req.file.path);
-
-      const artist = new Artist({
-        ...artistInfo,
-        image: imageResult.secure_url,
-        cloudinaryId: imageResult.public_id,
-      });
-      await artist.save();
-
-      res.status(201).send(artist);
-    } catch (e) {
-      res.status(400).json({
-        message: e.message,
-      });
-    }
-  }
-);
-
 router.get("/", paginateArtists, async (req, res) => {
   try {
     const artists = await Artist.find(req.find)
@@ -55,44 +29,15 @@ router.get("/", paginateArtists, async (req, res) => {
 
 router.get("/mostRatedArtists", async (req, res) => {
   try {
-    const mostRatedArtists = await Artist.aggregate([
-      {
-        $addFields: {
-          numRatings: { $size: "$ratings" },
-        },
-      },
-      {
-        $sort: { numRatings: -1 },
-      },
-      {
-        $limit: 4,
-      },
-    ]);
+    const mostRatedArtists = await Artist.find({})
+      .sort({ ratingCount: -1 })
+      .limit(4);
 
     mostRatedArtists.forEach((artist) => {
       artist.rating = artist.rating.toFixed(1);
     });
 
     res.status(200).send({ mostRatedArtists });
-  } catch (e) {
-    res.status(400).json({
-      message: e.message,
-    });
-  }
-});
-
-router.get("/:id", identifyUser, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const artist = await Artist.findOne({ _id: id }).lean();
-    const relevantUser = artist.ratings.find(
-      (rating) => rating.userId.toString() === req.user?._id.toString()
-    );
-
-    artist.ratingOfRelevantUser = relevantUser?.rating;
-    artist.rating = +artist.rating.toFixed(1);
-
-    res.status(200).send({ artist });
   } catch (e) {
     res.status(400).json({
       message: e.message,
@@ -119,6 +64,51 @@ router.get("/similarArtists/:id", async (req, res) => {
     });
   }
 });
+
+router.get("/:id", identifyUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const artist = await Artist.findOne({ _id: id }).lean();
+    const relevantUser = artist.ratings.find(
+      (rating) => rating.userId.toString() === req.user?._id.toString()
+    );
+
+    artist.ratingOfRelevantUser = relevantUser?.rating;
+    artist.rating = +artist.rating.toFixed(1);
+
+    res.status(200).send({ artist });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.post(
+  "/",
+  identifyUser,
+  authenticate,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const artistInfo = JSON.parse(req.body.artistInfo);
+      const imageResult = await cloudinary.uploader.upload(req.file.path);
+
+      const artist = new Artist({
+        ...artistInfo,
+        image: imageResult.secure_url,
+        cloudinaryId: imageResult.public_id,
+      });
+      await artist.save();
+
+      res.status(201).send(artist);
+    } catch (e) {
+      res.status(400).json({
+        message: e.message,
+      });
+    }
+  }
+);
 
 router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
   try {

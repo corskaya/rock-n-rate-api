@@ -4,19 +4,6 @@ const authenticate = require("../middlewares/authenticate");
 const paginateSongs = require("../middlewares/paginateSongs");
 const identifyUser = require("../middlewares/identifyUser");
 
-router.post("/", identifyUser, authenticate, async (req, res) => {
-  try {
-    const song = new Song(req.body);
-    await song.save();
-
-    res.status(201).send(song);
-  } catch (e) {
-    res.status(400).json({
-      message: e.message,
-    });
-  }
-});
-
 router.get("/", paginateSongs, async (req, res) => {
   try {
     const songs = await Song.find(req.find)
@@ -31,6 +18,44 @@ router.get("/", paginateSongs, async (req, res) => {
     });
 
     res.status(200).send({ count, pageCount, songs });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.get("/mostRatedSongs", async (req, res) => {
+  try {
+    const mostRatedSongs = await Song.find({})
+      .sort({ ratingCount: -1 })
+      .limit(18);
+
+    mostRatedSongs.forEach((song) => {
+      song.rating = song.rating.toFixed(1);
+    });
+
+    res.status(200).send({ mostRatedSongs });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.get("/similarSongs/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const song = await Song.findOne({ _id: id });
+
+    const similarSongs = await Song.find({
+      _id: { $ne: song._id },
+      genres: { $in: song.genres },
+    })
+      .sort({ genres: -1 })
+      .limit(4);
+
+    res.status(200).send({ similarSongs });
   } catch (e) {
     res.status(400).json({
       message: e.message,
@@ -57,19 +82,12 @@ router.get("/:id", identifyUser, async (req, res) => {
   }
 });
 
-router.get("/similarSongs/:id", async (req, res) => {
+router.post("/", identifyUser, authenticate, async (req, res) => {
   try {
-    const { id } = req.params;
-    const song = await Song.findOne({ _id: id });
+    const song = new Song(req.body);
+    await song.save();
 
-    const similarSongs = await Song.find({
-      _id: { $ne: song._id },
-      genres: { $in: song.genres },
-    })
-      .sort({ genres: -1 })
-      .limit(4);
-
-    res.status(200).send({ similarSongs });
+    res.status(201).send(song);
   } catch (e) {
     res.status(400).json({
       message: e.message,

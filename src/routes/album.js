@@ -6,32 +6,6 @@ const cloudinary = require("../utils/cloudinary");
 const paginateAlbums = require("../middlewares/paginateAlbums");
 const identifyUser = require("../middlewares/identifyUser");
 
-router.post(
-  "/",
-  identifyUser,
-  authenticate,
-  upload.single("image"),
-  async (req, res) => {
-    try {
-      const albumInfo = JSON.parse(req.body.albumInfo);
-      const imageResult = await cloudinary.uploader.upload(req.file.path);
-
-      const album = new Album({
-        ...albumInfo,
-        image: imageResult.secure_url,
-        cloudinaryId: imageResult.public_id,
-      });
-      await album.save();
-
-      res.status(201).send(album);
-    } catch (e) {
-      res.status(400).json({
-        message: e.message,
-      });
-    }
-  }
-);
-
 router.get("/", paginateAlbums, async (req, res) => {
   try {
     const albums = await Album.find(req.find)
@@ -53,18 +27,17 @@ router.get("/", paginateAlbums, async (req, res) => {
   }
 });
 
-router.get("/:id", identifyUser, async (req, res) => {
+router.get("/mostRatedAlbums", async (req, res) => {
   try {
-    const { id } = req.params;
-    const album = await Album.findOne({ _id: id }).lean();
-    const relevantUser = album.ratings.find(
-      (rating) => rating.userId.toString() === req.user?._id.toString()
-    );
+    const mostRatedAlbums = await Album.find({})
+      .sort({ ratingCount: -1 })
+      .limit(8);
 
-    album.ratingOfRelevantUser = relevantUser?.rating;
-    album.rating = +album.rating.toFixed(1);
+    mostRatedAlbums.forEach((album) => {
+      album.rating = album.rating.toFixed(1);
+    });
 
-    res.status(200).send({ album });
+    res.status(200).send({ mostRatedAlbums });
   } catch (e) {
     res.status(400).json({
       message: e.message,
@@ -91,6 +64,51 @@ router.get("/similarAlbums/:id", async (req, res) => {
     });
   }
 });
+
+router.get("/:id", identifyUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const album = await Album.findOne({ _id: id }).lean();
+    const relevantUser = album.ratings.find(
+      (rating) => rating.userId.toString() === req.user?._id.toString()
+    );
+
+    album.ratingOfRelevantUser = relevantUser?.rating;
+    album.rating = +album.rating.toFixed(1);
+
+    res.status(200).send({ album });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.post(
+  "/",
+  identifyUser,
+  authenticate,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const albumInfo = JSON.parse(req.body.albumInfo);
+      const imageResult = await cloudinary.uploader.upload(req.file.path);
+
+      const album = new Album({
+        ...albumInfo,
+        image: imageResult.secure_url,
+        cloudinaryId: imageResult.public_id,
+      });
+      await album.save();
+
+      res.status(201).send(album);
+    } catch (e) {
+      res.status(400).json({
+        message: e.message,
+      });
+    }
+  }
+);
 
 router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
   try {
