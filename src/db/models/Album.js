@@ -30,6 +30,10 @@ const AlbumSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    ratingCount: {
+      type: Number,
+      default: 0,
+    },
     about: {
       type: String,
     },
@@ -70,6 +74,7 @@ const AlbumSchema = new mongoose.Schema(
 );
 
 AlbumSchema.methods.updateRating = function () {
+  this.ratingCount = this.ratings.length;
   if (this.ratings.length === 0) {
     this.rating = 0;
   } else {
