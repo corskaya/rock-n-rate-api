@@ -35,6 +35,7 @@ const paginateAlbums = async (req, res, next) => {
     let sortBy = "createdAt";
     if (orderBy === "Year") sortBy = "releaseDate";
     if (orderBy === "Rating") sortBy = "rating";
+    if (orderBy === "Popularity") sortBy = "ratingCount";
     let sortOrder = orderBy === "Oldest" ? 1 : -1;
 
     req.find = query;
