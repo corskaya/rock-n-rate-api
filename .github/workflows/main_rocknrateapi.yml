@@ -16,17 +16,27 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Create env file
+        run: |
+          touch .env
+          echo PORT=${{ secrets.PORT }} >> .env
+          echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+          echo MONGODB_URL=${{ secrets.MONGODB_URL }} >> .env
+          echo CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }} >> .env
+          echo CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }} >> .env
+          echo CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }} >> .env
+
       - name: Set up Node.js version
         uses: actions/setup-node@v1
         with:
-          node-version: '18.x'
+          node-version: "18.x"
 
       - name: npm install, build, and test
         run: |
           npm install
           npm run build --if-present
           npm run test --if-present
-      
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
@@ -37,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: 'Production'
+      name: "Production"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
@@ -46,11 +56,11 @@ jobs:
         with:
           name: node-app
 
-      - name: 'Deploy to Azure Web App'
+      - name: "Deploy to Azure Web App"
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
-          app-name: 'rocknrateapi'
-          slot-name: 'Production'
+          app-name: "rocknrateapi"
+          slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7D4468A909944BA8B1200996653A4901 }}
           package: .
