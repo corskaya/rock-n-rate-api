@@ -4,8 +4,8 @@
   "description": "rocknrate api",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "author": "cagri orskaya",
   "license": "ISC",
