@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "build": "node src/server.js"
+    "dev": "nodemon src/server.js"
   },
   "author": "cagri orskaya",
   "license": "ISC",
