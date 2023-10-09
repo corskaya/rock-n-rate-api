@@ -1,9 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const routes = require("./routes");
+const routes = require("./src/routes");
 const cors = require("cors");
 require("dotenv").config();
-require("./db/loaders/mongoose");
+require("./src/db/loaders/mongoose");
 
 const app = express();
 app.use(bodyParser.json({ limit: "50mb" }));
