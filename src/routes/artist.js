@@ -1,10 +1,20 @@
+const path = require("path");
 const router = require("express").Router();
-const Artist = require("../db/models/Artist");
-const authenticate = require("../middlewares/authenticate");
-const upload = require("../utils/multer");
-const cloudinary = require("../utils/cloudinary");
-const paginateArtists = require("../middlewares/paginateArtists");
-const identifyUser = require("../middlewares/identifyUser");
+const Artist = require(path.join(__dirname, "../db/models/Artist"));
+const authenticate = require(path.join(
+  __dirname,
+  "../middlewares/authenticate"
+));
+const upload = require(path.join(__dirname, "../utils/multer"));
+const cloudinary = require(path.join(__dirname, "../utils/cloudinary"));
+const paginateArtists = require(path.join(
+  __dirname,
+  "../middlewares/paginateArtists"
+));
+const identifyUser = require(path.join(
+  __dirname,
+  "../middlewares/identifyUser"
+));
 
 router.get("/", paginateArtists, async (req, res) => {
   try {

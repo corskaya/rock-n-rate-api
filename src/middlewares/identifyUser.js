@@ -1,5 +1,6 @@
+const path = require("path");
 const jwt = require("jsonwebtoken");
-const User = require("../db/models/User");
+const User = require(path.join(__dirname, "../db/models/User"));
 
 const identifyUser = async (req, res, next) => {
   try {

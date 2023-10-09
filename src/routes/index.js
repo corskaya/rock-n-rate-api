@@ -1,8 +1,9 @@
+const path = require("path");
 const router = require("express").Router();
-const user = require("./user");
-const artist = require("./artist");
-const album = require("./album");
-const song = require("./song");
+const user = require(path.join(__dirname, "./user"));
+const artist = require(path.join(__dirname, "./artist"));
+const album = require(path.join(__dirname, "./album"));
+const song = require(path.join(__dirname, "./song"));
 
 router.use("/user", user.router);
 router.use("/artist", artist.router);

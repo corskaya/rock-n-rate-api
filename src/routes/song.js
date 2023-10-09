@@ -1,8 +1,18 @@
+const path = require("path");
 const router = require("express").Router();
-const Song = require("../db/models/Song");
-const authenticate = require("../middlewares/authenticate");
-const paginateSongs = require("../middlewares/paginateSongs");
-const identifyUser = require("../middlewares/identifyUser");
+const Song = require(path.join(__dirname, "../db/models/Song"));
+const authenticate = require(path.join(
+  __dirname,
+  "../middlewares/authenticate"
+));
+const paginateSongs = require(path.join(
+  __dirname,
+  "../middlewares/paginateSongs"
+));
+const identifyUser = require(path.join(
+  __dirname,
+  "../middlewares/identifyUser"
+));
 
 router.get("/", paginateSongs, async (req, res) => {
   try {

@@ -1,4 +1,5 @@
-const User = require("../db/models/User");
+const path = require("path");
+const User = require(path.join(__dirname, "../db/models/User"));
 
 const validateRegister = async (req, res, next) => {
   try {
