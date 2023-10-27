@@ -1,6 +1,5 @@
-const path = require("path");
 const mongoose = require("mongoose");
-const genres = require(path.join(__dirname, "../../constants/genres"));
+const genres = require("../../constants/genres");
 const { ObjectId } = mongoose.Schema.Types;
 
 const RatingSchema = new mongoose.Schema(

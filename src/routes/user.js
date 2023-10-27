@@ -1,10 +1,6 @@
-const path = require("path");
 const router = require("express").Router();
-const User = require(path.join(__dirname, "../db/models/User"));
-const validateRegister = require(path.join(
-  __dirname,
-  "../middlewares/validateRegister"
-));
+const User = require("../db/models/User");
+const validateRegister = require("../middlewares/validateRegister");
 
 router.post("/register", validateRegister, async (req, res) => {
   try {

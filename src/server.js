@@ -1,9 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const routes = require("./src/routes");
+const routes = require("./routes");
 const cors = require("cors");
 require("dotenv").config();
-require("./src/db/loaders/mongoose");
+require("./db/loaders/mongoose");
 
 const app = express();
 app.use(bodyParser.json({ limit: "50mb" }));
@@ -22,3 +22,5 @@ if (process.env.PORT) {
     console.log(`Rock'n Rate API Started up at port 3000`);
   });
 }
+
+module.exports = app;
