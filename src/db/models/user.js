@@ -41,6 +41,9 @@ const UserSchema = new mongoose.Schema(
     cloudinaryId: {
       type: String,
     },
+    about: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

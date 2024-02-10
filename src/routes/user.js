@@ -2,6 +2,23 @@ const router = require("express").Router();
 const User = require("../db/models/User");
 const validateRegister = require("../middlewares/validateRegister");
 
+router.get("/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    res.status(200).send({ user });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 router.post("/register", validateRegister, async (req, res) => {
   try {
     const { username, email, password } = req.body;
