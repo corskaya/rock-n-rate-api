@@ -2,11 +2,10 @@
   "name": "rockn-rate-api",
   "version": "1.0.0",
   "description": "rocknrate api",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "build": "npm install"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
   },
   "author": "cagri orskaya",
   "license": "ISC",
