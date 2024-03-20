@@ -2,12 +2,10 @@
   "name": "rockn-rate-api",
   "version": "1.0.0",
   "description": "rocknrate api",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "build": "npm install",
-    "vercel-build": "echo hello"
+    "dev": "nodemon src/server.js"
   },
   "author": "cagri orskaya",
   "license": "ISC",
