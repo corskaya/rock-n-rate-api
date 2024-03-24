@@ -16,7 +16,7 @@ const CommentSchema = new mongoose.Schema(
     likedBy: {
       type: [ObjectId],
     },
-    userRefObjectId: {
+    userId: {
       type: ObjectId,
       required: true,
     },
@@ -24,7 +24,7 @@ const CommentSchema = new mongoose.Schema(
       type: String,
       enum: Object.values(Topic),
     },
-    topicRefObjectId: {
+    topicId: {
       type: ObjectId,
       required: true,
     },

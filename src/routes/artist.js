@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const Artist = require("../db/models/Artist");
+const Rating = require("../db/models/Rating");
+const { Topic } = require("../db/models/Rating");
 const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
@@ -67,13 +69,12 @@ router.get("/similarArtists/:id", async (req, res) => {
 
 router.get("/:id", identifyUser, async (req, res) => {
   try {
-    const { id } = req.params;
-    const artist = await Artist.findOne({ _id: id }).lean();
-    const relevantUser = artist.ratings.find(
-      (rating) => rating.userId.toString() === req.user?._id.toString()
-    );
+    const artistId = req.params.id;
+    const userId = req.user._id;
+    const artist = await Artist.findOne({ _id: artistId }).lean();
+    const userRating = await Rating.findOne({ topicId: artistId, userId });
 
-    artist.ratingOfRelevantUser = relevantUser?.rating;
+    artist.ratingOfRelevantUser = userRating?.rating;
     artist.rating = +artist.rating.toFixed(1);
 
     res.status(200).send({ artist });
@@ -112,21 +113,26 @@ router.post(
 
 router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
   try {
-    const { id } = req.params;
+    const artistId = req.params.id;
+    const userId = req.user._id;
     const { rating } = req.body;
-    const artist = await Artist.findOne({ _id: id });
+    const artist = await Artist.findOne({ _id: artistId });
+    const userRating = await Rating.findOne({ topicId: artistId, userId });
 
-    const existingRatingIndex = artist.ratings.findIndex(
-      (rating) => rating.userId.toString() === req.user._id.toString()
-    );
-
-    if (existingRatingIndex !== -1) {
-      artist.ratings[existingRatingIndex].rating = rating;
+    if (userRating) {
+      userRating.rating = rating;
+      await userRating.save();
     } else {
-      artist.ratings.push({ userId: req.user._id, rating });
+      await Rating.create({
+        topic: Topic.Artist,
+        topicId: artistId,
+        userId,
+        rating,
+      });
     }
 
-    artist.updateRating();
+    const artistRatings = await Rating.find({ topicId: artistId });
+    artist.updateRating(artistRatings);
     await artist.save();
 
     artist._doc.ratingOfRelevantUser = rating;
@@ -146,14 +152,13 @@ router.delete(
   authenticate,
   async (req, res) => {
     try {
-      const { id } = req.params;
-      const artist = await Artist.findOne({ _id: id });
+      const artistId = req.params.id;
+      const userId = req.user._id;
+      const artist = await Artist.findOne({ _id: artistId });
+      await Rating.findOneAndDelete({ topicId: artistId, userId });
 
-      artist.ratings = artist.ratings.filter(
-        (rating) => rating.userId.toString() !== req.user._id.toString()
-      );
-
-      artist.updateRating();
+      const artistRatings = await Rating.find({ topicId: artistId });
+      artist.updateRating(artistRatings);
       await artist.save();
 
       res.status(200).send({ artist });

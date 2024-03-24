@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const Album = require("../db/models/Album");
+const Rating = require("../db/models/Rating");
+const { Topic } = require("../db/models/Rating");
 const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
@@ -67,13 +69,12 @@ router.get("/similarAlbums/:id", async (req, res) => {
 
 router.get("/:id", identifyUser, async (req, res) => {
   try {
-    const { id } = req.params;
-    const album = await Album.findOne({ _id: id }).lean();
-    const relevantUser = album.ratings.find(
-      (rating) => rating.userId.toString() === req.user?._id.toString()
-    );
+    const albumId = req.params.id;
+    const userId = req.user._id;
+    const album = await Album.findOne({ _id: albumId }).lean();
+    const userRating = await Rating.findOne({ topicId: albumId, userId });
 
-    album.ratingOfRelevantUser = relevantUser?.rating;
+    album.ratingOfRelevantUser = userRating?.rating;
     album.rating = +album.rating.toFixed(1);
 
     res.status(200).send({ album });
@@ -112,21 +113,26 @@ router.post(
 
 router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
   try {
-    const { id } = req.params;
+    const albumId = req.params.id;
+    const userId = req.user._id;
     const { rating } = req.body;
-    const album = await Album.findOne({ _id: id });
+    const album = await Album.findOne({ _id: albumId });
+    const userRating = await Rating.findOne({ topicId: albumId, userId });
 
-    const existingRatingIndex = album.ratings.findIndex(
-      (rating) => rating.userId.toString() === req.user._id.toString()
-    );
-
-    if (existingRatingIndex !== -1) {
-      album.ratings[existingRatingIndex].rating = rating;
+    if (userRating) {
+      userRating.rating = rating;
+      await userRating.save();
     } else {
-      album.ratings.push({ userId: req.user._id, rating });
+      await Rating.create({
+        topic: Topic.Album,
+        topicId: albumId,
+        userId,
+        rating,
+      });
     }
 
-    album.updateRating();
+    const albumRatings = await Rating.find({ topicId: albumId });
+    album.updateRating(albumRatings);
     await album.save();
 
     album._doc.ratingOfRelevantUser = rating;
@@ -146,14 +152,13 @@ router.delete(
   authenticate,
   async (req, res) => {
     try {
-      const { id } = req.params;
-      const album = await Album.findOne({ _id: id });
+      const albumId = req.params.id;
+      const userId = req.user._id;
+      const album = await Album.findOne({ _id: albumId });
+      await Rating.findOneAndDelete({ topicId: albumId, userId });
 
-      album.ratings = album.ratings.filter(
-        (rating) => rating.userId.toString() !== req.user._id.toString()
-      );
-
-      album.updateRating();
+      const albumRatings = await Rating.find({ topicId: albumId });
+      album.updateRating(albumRatings);
       await album.save();
 
       res.status(200).send({ album });
