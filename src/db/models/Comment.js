@@ -9,17 +9,6 @@ const Topic = Object.freeze({
 
 const CommentSchema = new mongoose.Schema(
   {
-    content: {
-      type: String,
-      required: true,
-    },
-    likedBy: {
-      type: [ObjectId],
-    },
-    userId: {
-      type: ObjectId,
-      required: true,
-    },
     topic: {
       type: String,
       enum: Object.values(Topic),
@@ -27,6 +16,21 @@ const CommentSchema = new mongoose.Schema(
     topicId: {
       type: ObjectId,
       required: true,
+    },
+    userId: {
+      type: ObjectId,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    likes: {
+      type: [ObjectId],
+    },
+    likeCount: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

@@ -16,6 +16,7 @@ const identifyUser = async (req, res, next) => {
     req.user = user;
     next();
   } catch (e) {
+    req.user = {};
     next();
   }
 };

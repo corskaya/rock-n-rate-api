@@ -1,15 +1,22 @@
 const router = require("express").Router();
 const User = require("../db/models/User");
+const Rating = require("../db/models/Rating");
+const Comment = require("../db/models/Comment");
 const validateRegister = require("../middlewares/validateRegister");
 
 router.get("/:username", async (req, res) => {
   try {
     const { username } = req.params;
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }, { password: 0 }).lean();
 
     if (!user) {
       throw new Error("User not found");
     }
+
+    const ratingCount = await Rating.countDocuments({ userId: user._id });
+    const commentCount = await Comment.countDocuments({ userId: user._id });
+    user.ratingCount = ratingCount;
+    user.commentCount = commentCount;
 
     res.status(200).send({ user });
   } catch (e) {
