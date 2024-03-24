@@ -31,6 +31,10 @@ const UserSchema = new mongoose.Schema(
       enum: Object.values(Role),
       default: Role.User,
     },
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

@@ -7,11 +7,12 @@ const Topic = Object.freeze({
   Song: "Song",
 });
 
-const CommentSchema = new mongoose.Schema(
+const RatingSchema = new mongoose.Schema(
   {
     topic: {
       type: String,
       enum: Object.values(Topic),
+      require: true,
     },
     topicId: {
       type: ObjectId,
@@ -21,21 +22,17 @@ const CommentSchema = new mongoose.Schema(
       type: ObjectId,
       required: true,
     },
-    content: {
-      type: String,
-      required: true,
-    },
-    likes: {
-      type: [ObjectId],
-    },
-    likeCount: {
+    rating: {
       type: Number,
-      default: 0,
+      required: true,
+      min: 1,
+      max: 10,
     },
   },
   { timestamps: true }
 );
 
-const Comment = mongoose.model("Comment", CommentSchema);
+const Rating = mongoose.model("Rating", RatingSchema);
 
-module.exports = Comment;
+module.exports = Rating;
+module.exports.Topic = Topic;
