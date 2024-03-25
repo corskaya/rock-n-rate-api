@@ -1,6 +1,6 @@
 const authenticate = async (req, res, next) => {
   try {
-    if (!req.user) {
+    if (!req.user._id) {
       throw new Error("Please login");
     }
 

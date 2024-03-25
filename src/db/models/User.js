@@ -39,7 +39,7 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    image: {
+    avatar: {
       type: String,
     },
     cloudinaryId: {
