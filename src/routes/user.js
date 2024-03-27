@@ -3,6 +3,10 @@ const User = require("../db/models/User");
 const Rating = require("../db/models/Rating");
 const Comment = require("../db/models/Comment");
 const validateRegister = require("../middlewares/validateRegister");
+const authenticate = require("../middlewares/authenticate");
+const upload = require("../utils/multer");
+const cloudinary = require("../utils/cloudinary");
+const identifyUser = require("../middlewares/identifyUser");
 
 router.get("/:username", async (req, res) => {
   try {
@@ -47,6 +51,54 @@ router.post("/login", async (req, res) => {
     const token = await user.generateAuthToken();
 
     res.status(200).send({ user, token });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.post(
+  "/avatar",
+  identifyUser,
+  authenticate,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const user = await User.findOne({ _id: req.user._id });
+
+      if (user.avatar) {
+        await cloudinary.uploader.destroy(user.cloudinaryId);
+      }
+
+      const result = await cloudinary.uploader.upload(req.file.path);
+      user.avatar = result.secure_url;
+      user.cloudinaryId = result.public_id;
+      await user.save();
+
+      res.status(200).send({ user });
+    } catch (e) {
+      res.status(400).json({
+        message: e.message,
+      });
+    }
+  }
+);
+
+router.delete("/avatar", identifyUser, authenticate, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.user._id });
+
+    if (!user.avatar) {
+      throw new Error("Avatar not found");
+    }
+
+    await cloudinary.uploader.destroy(user.cloudinaryId);
+    user.avatar = undefined;
+    user.cloudinaryId = undefined;
+    await user.save();
+
+    res.status(200).send({ user });
   } catch (e) {
     res.status(400).json({
       message: e.message,

@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Album = require("../db/models/Album");
 const Rating = require("../db/models/Rating");
+const User = require("../db/models/User");
 const { Topic } = require("../db/models/Rating");
 const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
@@ -60,6 +61,44 @@ router.get("/similarAlbums/:id", async (req, res) => {
       .limit(4);
 
     res.status(200).send({ similarAlbums });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.get("/ratings/:id", async (req, res) => {
+  try {
+    const albumId = req.params.id;
+    const ratings = await Rating.find({ topicId: albumId });
+    const userIds = ratings.map((rating) => rating.userId);
+    const users = await User.find({ _id: { $in: userIds } });
+
+    const userRatings = users.map((user) => {
+      const rating = ratings.find(
+        (rating) => rating.userId.toString() === user._id.toString()
+      );
+
+      if (user.isPrivate) {
+        return {
+          username: "Private User",
+          rating: rating.rating,
+          createdAt: rating.createdAt,
+          updatedAt: rating.updatedAt,
+        };
+      }
+
+      return {
+        username: user.username,
+        avatar: user.avatar,
+        rating: rating.rating,
+        createdAt: rating.createdAt,
+        updatedAt: rating.updatedAt,
+      };
+    });
+
+    res.status(200).send({ ratings: userRatings });
   } catch (e) {
     res.status(400).json({
       message: e.message,
