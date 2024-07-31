@@ -17,7 +17,7 @@ Rock'n Rate is a sophisticated web application designed for rock music enthusias
 
 ## Deployment
 
-The backend API is deployed on Vercel. You can view the deployed API here: [Rock'n Rate API](https://thankful-plant-0cd9f5003.5.azurestaticapps.net/)
+The backend API is deployed on Vercel. You can view the deployed API here: [Rock'n Rate API](https://rock-n-rate-api.vercel.app)
 
 ## License
 
