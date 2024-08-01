@@ -80,10 +80,10 @@ router.get("/ratings/:id", async (req, res) => {
 
       if (user.isPrivate) {
         return {
-          username: "Private User",
           rating: rating.rating,
           createdAt: rating.createdAt,
           updatedAt: rating.updatedAt,
+          isPrivate: user.isPrivate,
         };
       }
 
@@ -93,6 +93,7 @@ router.get("/ratings/:id", async (req, res) => {
         rating: rating.rating,
         createdAt: rating.createdAt,
         updatedAt: rating.updatedAt,
+        isPrivate: user.isPrivate,
       };
     });
 
