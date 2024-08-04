@@ -21,7 +21,8 @@ router.get("/", (req, res) => {
 
 router.get("/quickSearch", async (req, res) => {
   try {
-    const { searchTerm } = req.query;
+    const searchTerm = req.query.searchTerm || "";
+    const limit = req.query.limit || 20;
 
     const [artists, albums, songs] = await Promise.all([
       Artist.find({}, { name: 1, image: 1, foundationYear: 1 }).lean(),
@@ -67,7 +68,7 @@ router.get("/quickSearch", async (req, res) => {
     };
 
     const fuse = new Fuse([...mappedArtists, ...mappedAlbums, ...mappedSongs], options);
-    const result = fuse.search(searchTerm).slice(0, 5).map((r) => r.item);
+    const result = fuse.search(searchTerm).slice(0, limit).map((r) => r.item);
 
     res.status(200).send({ result });
   } catch (e) {
