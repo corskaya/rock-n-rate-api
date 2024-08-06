@@ -64,7 +64,7 @@ router.get("/quickSearch", async (req, res) => {
 
     const options = {
       keys: ["name", "artistRefName"],
-      threshold: 0.5,
+      threshold: 0.6,
     };
 
     const fuse = new Fuse([...mappedArtists, ...mappedAlbums, ...mappedSongs], options);
