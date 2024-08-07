@@ -5,6 +5,7 @@ const user = require("./user");
 const artist = require("./artist");
 const album = require("./album");
 const song = require("./song");
+const comment = require("./comment");
 const Artist = require("../db/models/Artist");
 const Album = require("../db/models/Album");
 const Song = require("../db/models/Song");
@@ -14,6 +15,7 @@ router.use("/user", user.router);
 router.use("/artist", artist.router);
 router.use("/album", album.router);
 router.use("/song", song.router);
+router.use("/comment", comment.router);
 
 router.get("/", (req, res) => {
   res.send("Rock'n Rate API running...");
