@@ -1,11 +1,6 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
-
-const Topic = Object.freeze({
-  Artist: "Artist",
-  Album: "Album",
-  Song: "Song",
-});
+const Topic = require("../../constants/topic");
 
 const CommentSchema = new mongoose.Schema(
   {

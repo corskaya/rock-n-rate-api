@@ -8,7 +8,7 @@ const song = require("./song");
 const Artist = require("../db/models/Artist");
 const Album = require("../db/models/Album");
 const Song = require("../db/models/Song");
-const types = require("../constants/types");
+const Topic = require("../constants/topic");
 
 router.use("/user", user.router);
 router.use("/artist", artist.router);
@@ -36,7 +36,7 @@ router.get("/quickSearch", async (req, res) => {
         name: artist.name,
         image: artist.image,
         year: artist.foundationYear,
-        type: types.Artist,
+        type: Topic.Artist,
       };
     });
 
@@ -47,7 +47,7 @@ router.get("/quickSearch", async (req, res) => {
         image: album.image,
         artistRefName: album.artistRefName,
         year: moment(album.releaseDate).year(),
-        type: types.Album,
+        type: Topic.Album,
       };
     });
 
@@ -58,7 +58,7 @@ router.get("/quickSearch", async (req, res) => {
         image: song.image,
         artistRefName: album.artistRefName,
         year: moment(song.releaseDate).year(),
-        type: types.Song,
+        type: Topic.Song,
       };
     });
 
