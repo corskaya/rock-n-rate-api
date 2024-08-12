@@ -31,6 +31,13 @@ const UserSchema = new mongoose.Schema(
       enum: Object.values(Role),
       default: Role.User,
     },
+    isActivated: {
+      type: Boolean,
+      default: false,
+    },
+    activationCode: {
+      type: String,
+    },
     isPrivate: {
       type: Boolean,
       default: false,
@@ -56,6 +63,7 @@ UserSchema.methods.toJSON = function () {
   const user = this;
   const userObject = user.toObject();
   delete userObject.password;
+  delete userObject.isDeleted;
   return userObject;
 };
 
@@ -87,11 +95,26 @@ UserSchema.statics.findByCredentials = async (usernameOrEmail, password) => {
 
 UserSchema.pre("save", async function (next) {
   const user = this;
+
+  if (user.isNew) {
+    user.activationCode = generateActivationCode();
+  }
+  
   if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 10);
   }
   next();
 });
+
+function generateActivationCode(length = 6) {
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 
 const User = mongoose.model("User", UserSchema);
 

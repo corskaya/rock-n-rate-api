@@ -3,7 +3,7 @@ const User = require("../db/models/User");
 const validateRegister = async (req, res, next) => {
   try {
     const { username, email, password, confirmPassword } = req.body;
-    const usernamePattern = /^[a-zA-Z0-9_]+$/;
+    const usernamePattern = /^[a-z0-9_]+$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!username || !email || !password || !confirmPassword) {
@@ -12,7 +12,7 @@ const validateRegister = async (req, res, next) => {
 
     if (!usernamePattern.test(username)) {
       throw new Error(
-        "Please use only letters, numbers and _ (underscore) in username"
+        "Please use only lowercase letters, numbers and _ (underscore) in username"
       );
     }
 

@@ -7,6 +7,7 @@ const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
 const identifyUser = require("../middlewares/identifyUser");
+const { activationTemplate, sendEmail } = require("../utils/email");
 
 router.get("/:username", async (req, res) => {
   try {
@@ -36,7 +37,31 @@ router.post("/register", validateRegister, async (req, res) => {
     const user = new User({ email, username, password });
     await user.save();
 
+    const template = activationTemplate(username, user.activationCode);
+    await sendEmail(email, 'Activation Code', template);
+
     res.status(201).send(user);
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.post("/activate", async (req, res) => {
+  try {
+    const { email, activationCode } = req.body;
+    const user = await User.findOne({ email, activationCode });
+
+    if (!user) {
+      throw new Error("The activation code is incorrect. Please check and try again.");
+    }
+
+    user.isActivated = true;
+    user.activationCode = undefined;
+    user.save();
+    const token = await user.generateAuthToken();
+    res.status(200).send({ user, token });
   } catch (e) {
     res.status(400).json({
       message: e.message,
