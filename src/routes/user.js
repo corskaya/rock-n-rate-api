@@ -37,8 +37,8 @@ router.post("/register", validateRegister, async (req, res) => {
     const user = new User({ email, username, password });
     await user.save();
 
-    const template = activationTemplate(username, user.activationCode);
-    await sendEmail(email, 'Activation Code', template);
+    const template = activationTemplate(username, user._id, user.activationCode);
+    await sendEmail(email, 'Verify Your Email', template);
 
     res.status(201).send(user);
   } catch (e) {
@@ -50,11 +50,19 @@ router.post("/register", validateRegister, async (req, res) => {
 
 router.post("/activate", async (req, res) => {
   try {
-    const { email, activationCode } = req.body;
-    const user = await User.findOne({ email, activationCode });
+    const { userId, activationCode } = req.body;
+    const user = await User.findById(userId);
 
     if (!user) {
-      throw new Error("The activation code is incorrect. Please check and try again.");
+      throw new Error("An unexpected error occured. Please try again.");
+    }
+
+    if (user.isActivated) {
+      throw new Error("Account already activated. Please log in.");
+    }
+
+    if (user.activationCode !== activationCode) {
+      throw new Error("An unexpected error occured. Please try again.");
     }
 
     user.isActivated = true;
@@ -73,6 +81,11 @@ router.post("/login", async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
     const user = await User.findByCredentials(usernameOrEmail, password);
+
+    if (!user.isActivated) {
+      throw new Error("Please verify your email before logging in. Check your inbox for the verification link.")
+    }
+
     const token = await user.generateAuthToken();
 
     res.status(200).send({ user, token });
