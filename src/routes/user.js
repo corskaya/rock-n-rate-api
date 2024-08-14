@@ -7,6 +7,7 @@ const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
 const identifyUser = require("../middlewares/identifyUser");
+const { activationTemplate, sendEmail } = require("../utils/email");
 
 router.get("/:username", async (req, res) => {
   try {
@@ -36,7 +37,39 @@ router.post("/register", validateRegister, async (req, res) => {
     const user = new User({ email, username, password });
     await user.save();
 
+    const template = activationTemplate(username, user._id, user.activationCode);
+    await sendEmail(email, 'Verify Your Email', template);
+
     res.status(201).send(user);
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.post("/activate", async (req, res) => {
+  try {
+    const { userId, activationCode } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("An unexpected error occured. Please try again.");
+    }
+
+    if (user.isActivated) {
+      throw new Error("Account already activated. Please log in.");
+    }
+
+    if (user.activationCode !== activationCode) {
+      throw new Error("An unexpected error occured. Please try again.");
+    }
+
+    user.isActivated = true;
+    user.activationCode = undefined;
+    user.save();
+    const token = await user.generateAuthToken();
+    res.status(200).send({ user, token });
   } catch (e) {
     res.status(400).json({
       message: e.message,
@@ -48,6 +81,11 @@ router.post("/login", async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
     const user = await User.findByCredentials(usernameOrEmail, password);
+
+    if (!user.isActivated) {
+      throw new Error("Please verify your email before logging in. Check your inbox for the verification link.")
+    }
+
     const token = await user.generateAuthToken();
 
     res.status(200).send({ user, token });
