@@ -55,6 +55,9 @@ const UserSchema = new mongoose.Schema(
     about: {
       type: String,
     },
+    passwordRefreshToken: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
@@ -64,6 +67,7 @@ UserSchema.methods.toJSON = function () {
   const userObject = user.toObject();
   delete userObject.password;
   delete userObject.isDeleted;
+  delete userObject.passwordRefreshToken;
   return userObject;
 };
 

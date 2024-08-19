@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const jwt = require("jsonwebtoken");
 const User = require("../db/models/User");
 const Rating = require("../db/models/Rating");
 const Comment = require("../db/models/Comment");
@@ -7,12 +8,15 @@ const authenticate = require("../middlewares/authenticate");
 const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
 const identifyUser = require("../middlewares/identifyUser");
-const { activationTemplate, sendEmail } = require("../utils/email");
+const { activationTemplate, resetPasswordTemplate, sendEmail } = require("../utils/email");
 
 router.get("/:username", async (req, res) => {
   try {
     const { username } = req.params;
-    const user = await User.findOne({ username }, { password: 0 }).lean();
+    const user = await User.findOne(
+      { username, isActivated: true },
+      { password: 0 }
+    ).lean();
 
     if (!user) {
       throw new Error("User not found");
@@ -38,7 +42,7 @@ router.post("/register", validateRegister, async (req, res) => {
     await user.save();
 
     const template = activationTemplate(username, user._id, user.activationCode);
-    await sendEmail(email, 'Verify Your Email', template);
+    await sendEmail(email, "Verify Your Email", template);
 
     res.status(201).send(user);
   } catch (e) {
@@ -77,13 +81,76 @@ router.post("/activate", async (req, res) => {
   }
 });
 
+router.post("/forgotPassword", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email, isActivated: true });
+
+    if (!user) {
+      throw new Error("Email address not found. Please check and try again.");
+    }
+
+    const payload = { _id: user._id.toString() };
+    const secretKey = process.env.JWT_SECRET;
+    const options = { expiresIn: "1h" };
+
+    const passwordRefreshToken = jwt.sign(payload, secretKey, options);
+    user.passwordRefreshToken = passwordRefreshToken;
+    await user.save();
+
+    const template = resetPasswordTemplate(user.username, passwordRefreshToken);
+    await sendEmail(email, "Reset Password", template);
+
+    res.status(200).send({ user });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.post("/resetPassword", async (req, res) => {
+  try {
+    const { password, confirmPassword, passwordRefreshToken } = req.body;
+
+    if (password !== confirmPassword) {
+      throw new Error("Passwords do not match.");
+    }
+
+    const secretKey = process.env.JWT_SECRET;
+    let decodedToken;
+
+    try {
+      decodedToken = jwt.verify(passwordRefreshToken, secretKey);
+    } catch (err) {
+      throw new Error("Reset link expired or invalid. Please request a new one.");
+    }
+
+    const user = await User.findOne({ _id: decodedToken._id, passwordRefreshToken });
+
+    if (!user) {
+      throw new Error("Reset request not found. Please try requesting a new reset link.");
+    }
+
+    user.password = password;
+    user.passwordRefreshToken = undefined;
+    await user.save();
+
+    res.status(200).send({ user });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 router.post("/login", async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
     const user = await User.findByCredentials(usernameOrEmail, password);
 
     if (!user.isActivated) {
-      throw new Error("Please verify your email before logging in. Check your inbox for the verification link.")
+      throw new Error("Please verify your email before logging in. Check your inbox for the verification link.");
     }
 
     const token = await user.generateAuthToken();
