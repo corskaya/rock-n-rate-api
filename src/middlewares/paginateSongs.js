@@ -15,12 +15,12 @@ const paginateSongs = async (req, res, next) => {
     page = Number(page) - 1;
     limit = Number(limit);
     rating = Number(rating);
-    gteYear =
-      year === "All"
-        ? moment("1900-01-01")
-        : moment(`${year.split("-")[0]}-01-01`);
-    lteYear =
-      year === "All" ? moment() : moment(`${year.split("-")[1]}-01-01`);
+    gteYear = year === "All"
+      ? moment("1900-01-01")
+      : moment(`${year.split("-")[0]}-01-01`);
+    lteYear = year === "All" 
+      ? moment() 
+      : moment(`${year.split("-")[1]}-01-01`).endOf("year");
 
     const query = {
       $or: [
