@@ -73,7 +73,6 @@ const genres = [
   "Nagoya kei",
   "Neo-psychedelia",
   "Neoclassical metal",
-  "Neue Deutsche Härte",
   "New prog",
   "New wave",
   "No wave",
