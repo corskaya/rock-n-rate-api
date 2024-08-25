@@ -4,7 +4,7 @@ const paginateArtists = async (req, res, next) => {
   try {
     let {
       page = 1,
-      limit = 10,
+      limit = 20,
       searchTerm = "",
       genre = "All",
       rating = 0,
