@@ -52,6 +52,10 @@ const SongSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    addedByUserId: {
+      type: ObjectId,
+      required: true,
+    },
   },
   { timestamps: true }
 );

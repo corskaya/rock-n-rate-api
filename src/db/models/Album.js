@@ -51,6 +51,10 @@ const AlbumSchema = new mongoose.Schema(
     cloudinaryId: {
       type: String,
     },
+    addedByUserId: {
+      type: ObjectId,
+      required: true,
+    },
   },
   { timestamps: true }
 );
