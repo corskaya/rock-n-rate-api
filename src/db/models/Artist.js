@@ -1,6 +1,19 @@
 const mongoose = require("mongoose");
 const genres = require("../../constants/genres");
+const countries = require("../../constants/countries");
 const { ObjectId } = mongoose.Schema.Types;
+
+const SocialSchema = new mongoose.Schema({
+  spotify: {
+    type: String,
+  },
+  youtube: {
+    type: String,
+  },
+  instagram: {
+    type: String,
+  },
+});
 
 const ArtistSchema = new mongoose.Schema(
   {
@@ -38,6 +51,16 @@ const ArtistSchema = new mongoose.Schema(
     foundationYear: {
       type: Number,
     },
+    country: {
+      type: String,
+      required: true,
+      enum: countries,
+    },
+    addedByUserId: {
+      type: ObjectId,
+      required: true,
+    },
+    social: SocialSchema,
   },
   { timestamps: true }
 );

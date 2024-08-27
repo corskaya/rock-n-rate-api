@@ -46,6 +46,38 @@ router.get("/mostRatedSongs", async (req, res) => {
   }
 });
 
+router.get("/overview/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const song = await Song.findOne({ _id: id }).lean();
+    const ratingCount = await Rating.countDocuments({ topicId: song._id });
+    const addedByUser = await User.findById(song.addedByUserId).lean();
+
+    const overview = {
+      artist: {
+        name: song.artistRefName,
+        _id: song.artistRefObjectId,
+      },
+      album: {
+        name: song.albumRefName,
+        _id: song.albumRefObjectId,
+      },
+      ratingCount,
+      releaseDate: song.releaseDate,
+      addedByUser: {
+        username: addedByUser.username,
+        avatar: addedByUser.avatar,
+      },
+    };
+
+    res.status(200).send({ overview });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 router.get("/similarSongs/:id", async (req, res) => {
   try {
     const { id } = req.params;

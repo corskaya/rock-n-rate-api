@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Album = require("../db/models/Album");
+const Song = require("../db/models/Song");
 const Rating = require("../db/models/Rating");
 const User = require("../db/models/User");
 const { Topic } = require("../db/models/Rating");
@@ -41,6 +42,36 @@ router.get("/mostRatedAlbums", async (req, res) => {
     });
 
     res.status(200).send({ mostRatedAlbums });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.get("/overview/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const album = await Album.findOne({ _id: id }).lean();
+    const songCount = await Song.countDocuments({ albumRefObjectId: album._id });
+    const ratingCount = await Rating.countDocuments({ topicId: album._id });
+    const addedByUser = await User.findById(album.addedByUserId).lean();
+
+    const overview = {
+      artist: {
+        name: album.artistRefName,
+        _id: album.artistRefObjectId,
+      },
+      songCount,
+      ratingCount,
+      releaseDate: album.releaseDate,
+      addedByUser: {
+        username: addedByUser.username,
+        avatar: addedByUser.avatar,
+      },
+    };
+
+    res.status(200).send({ overview });
   } catch (e) {
     res.status(400).json({
       message: e.message,
