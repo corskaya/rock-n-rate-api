@@ -22,6 +22,11 @@ const ArtistSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     rating: {
       type: Number,
       default: 0,
@@ -62,7 +67,7 @@ const ArtistSchema = new mongoose.Schema(
     },
     social: SocialSchema,
   },
-  { timestamps: true }
+  {timestamps: true}
 );
 
 ArtistSchema.methods.updateRating = function (ratings) {

@@ -6,6 +6,8 @@ const { Topic } = require("../db/models/Rating");
 const authenticate = require("../middlewares/authenticate");
 const paginateSongs = require("../middlewares/paginateSongs");
 const identifyUser = require("../middlewares/identifyUser");
+const slugger = require('../utils/slugger')
+
 
 router.get("/", paginateSongs, async (req, res) => {
   try {
@@ -155,9 +157,29 @@ router.get("/:id", identifyUser, async (req, res) => {
   }
 });
 
+router.get("getBySlug/:slug", identifyUser, async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const userId = req.user._id;
+    const song = await Song.findOne({ slug }).lean();
+    const userRating = await Rating.findOne({ topicId: song._id, userId });
+
+    song.ratingOfRelevantUser = userRating?.rating;
+    song.rating = +song.rating.toFixed(1);
+
+    res.status(200).send({ song });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+
 router.post("/", identifyUser, authenticate, async (req, res) => {
   try {
-    const song = new Song(req.body);
+    // TODO!! : validation required
+    const song = new Song({...req.body , slug :slugger( req.body.name)});
     await song.save();
 
     res.status(201).send(song);

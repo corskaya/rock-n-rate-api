@@ -9,6 +9,11 @@ const SongSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     rating: {
       type: Number,
       default: 0,
