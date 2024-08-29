@@ -9,6 +9,7 @@ const upload = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
 const paginateAlbums = require("../middlewares/paginateAlbums");
 const identifyUser = require("../middlewares/identifyUser");
+const slugger = require('../utils/slugger')
 
 router.get("/", paginateAlbums, async (req, res) => {
   try {
@@ -156,6 +157,24 @@ router.get("/:id", identifyUser, async (req, res) => {
   }
 });
 
+router.get("getBySlug/:slug", identifyUser, async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const userId = req.user._id;
+    const album = await Album.findOne({ slug }).lean();
+    const userRating = await Rating.findOne({ topicId: albumId, userId });
+
+    album.ratingOfRelevantUser = userRating?.rating;
+    album.rating = +album.rating.toFixed(1);
+
+    res.status(200).send({ album });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 router.post(
   "/",
   identifyUser,
@@ -168,6 +187,7 @@ router.post(
 
       const album = new Album({
         ...albumInfo,
+        slug : slugger(albumInfo.title),
         image: imageResult.secure_url,
         cloudinaryId: imageResult.public_id,
       });
