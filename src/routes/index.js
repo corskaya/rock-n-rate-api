@@ -27,14 +27,14 @@ router.get("/quickSearch", async (req, res) => {
     const limit = req.query.limit || 20;
 
     const [artists, albums, songs] = await Promise.all([
-      Artist.find({}, { name: 1, image: 1, foundationYear: 1 }).lean(),
-      Album.find({}, { name: 1, artistRefName: 1, image: 1, releaseDate: 1 }).lean(),
-      Song.find({}, { name: 1, artistRefName: 1, image: 1, releaseDate: 1 }).lean(),
+      Artist.find({}, { slug: 1, name: 1, image: 1, foundationYear: 1 }).lean(),
+      Album.find({}, { slug: 1, name: 1, artistRefName: 1, image: 1, releaseDate: 1 }).lean(),
+      Song.find({}, { slug: 1, name: 1, artistRefName: 1, image: 1, releaseDate: 1 }).lean(),
     ]);
 
     const mappedArtists = artists.map((artist) => {
       return {
-        _id: artist._id,
+        slug: artist.slug,
         name: artist.name,
         image: artist.image,
         year: artist.foundationYear,
@@ -44,7 +44,7 @@ router.get("/quickSearch", async (req, res) => {
 
     const mappedAlbums = albums.map((album) => {
       return {
-        _id: album._id,
+        slug: album.slug,
         name: album.name,
         image: album.image,
         artistRefName: album.artistRefName,
@@ -55,7 +55,7 @@ router.get("/quickSearch", async (req, res) => {
 
     const mappedSongs = songs.map((song) => {
       return {
-        _id: song._id,
+        slug: song.slug,
         name: song.name,
         image: song.image,
         artistRefName: album.artistRefName,

@@ -49,18 +49,23 @@ router.get("/mostRatedAlbums", async (req, res) => {
   }
 });
 
-router.get("/overview/:id", async (req, res) => {
+router.get("/overview/:slug", async (req, res) => {
   try {
-    const { id } = req.params;
-    const album = await Album.findOne({ _id: id }).lean();
-    const songCount = await Song.countDocuments({ albumRefObjectId: album._id });
+    const { slug } = req.params;
+    const album = await Album.findOne({ slug }).lean();
+
+    if (!album) {
+      throw new Error("Album not found");
+    }
+
+    const songCount = await Song.countDocuments({ albumRefSlug: album.slug });
     const ratingCount = await Rating.countDocuments({ topicId: album._id });
     const addedByUser = await User.findById(album.addedByUserId).lean();
 
     const overview = {
       artist: {
         name: album.artistRefName,
-        _id: album.artistRefObjectId,
+        slug: album.artistRefSlug,
       },
       songCount,
       ratingCount,
@@ -79,10 +84,10 @@ router.get("/overview/:id", async (req, res) => {
   }
 });
 
-router.get("/similarAlbums/:id", async (req, res) => {
+router.get("/similarAlbums/:slug", async (req, res) => {
   try {
-    const { id } = req.params;
-    const album = await Album.findOne({ _id: id });
+    const { slug } = req.params;
+    const album = await Album.findOne({ slug });
 
     const similarAlbums = await Album.find({
       _id: { $ne: album._id },
@@ -99,10 +104,16 @@ router.get("/similarAlbums/:id", async (req, res) => {
   }
 });
 
-router.get("/ratings/:id", async (req, res) => {
+router.get("/ratings/:slug", async (req, res) => {
   try {
-    const albumId = req.params.id;
-    const ratings = await Rating.find({ topicId: albumId });
+    const { slug } = req.params;
+    const album = await Album.findOne({ slug });
+
+    if (!album) {
+      throw new Error("Album not found");
+    }
+
+    const ratings = await Rating.find({ topicId: album._id });
     const userIds = ratings.map((rating) => rating.userId);
     const users = await User.find({ _id: { $in: userIds } });
 
@@ -138,12 +149,17 @@ router.get("/ratings/:id", async (req, res) => {
   }
 });
 
-router.get("/:id", identifyUser, async (req, res) => {
+router.get("/:slug", identifyUser, async (req, res) => {
   try {
-    const albumId = req.params.id;
+    const { slug } = req.params;
     const userId = req.user._id;
-    const album = await Album.findOne({ _id: albumId }).lean();
-    const userRating = await Rating.findOne({ topicId: albumId, userId });
+    const album = await Album.findOne({ slug }).lean();
+
+    if (!album) {
+      throw new Error("Album not found");
+    }
+
+    const userRating = await Rating.findOne({ topicId: album._id, userId });
 
     album.ratingOfRelevantUser = userRating?.rating;
     album.rating = +album.rating.toFixed(1);
@@ -156,39 +172,44 @@ router.get("/:id", identifyUser, async (req, res) => {
   }
 });
 
-router.post(
-  "/",
-  identifyUser,
-  authenticate,
-  upload.single("image"),
-  async (req, res) => {
-    try {
-      const albumInfo = JSON.parse(req.body.albumInfo);
-      const imageResult = await cloudinary.uploader.upload(req.file.path);
+// router.post(
+//   "/",
+//   identifyUser,
+//   authenticate,
+//   upload.single("image"),
+//   async (req, res) => {
+//     try {
+//       const albumInfo = JSON.parse(req.body.albumInfo);
+//       const imageResult = await cloudinary.uploader.upload(req.file.path);
 
-      const album = new Album({
-        ...albumInfo,
-        image: imageResult.secure_url,
-        cloudinaryId: imageResult.public_id,
-      });
-      await album.save();
+//       const album = new Album({
+//         ...albumInfo,
+//         image: imageResult.secure_url,
+//         cloudinaryId: imageResult.public_id,
+//       });
+//       await album.save();
 
-      res.status(201).send(album);
-    } catch (e) {
-      res.status(400).json({
-        message: e.message,
-      });
-    }
-  }
-);
+//       res.status(201).send(album);
+//     } catch (e) {
+//       res.status(400).json({
+//         message: e.message,
+//       });
+//     }
+//   }
+// );
 
-router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
+router.post("/rate/:slug", identifyUser, authenticate, async (req, res) => {
   try {
-    const albumId = req.params.id;
-    const userId = req.user._id;
+    const { slug } = req.params;
     const { rating } = req.body;
-    const album = await Album.findOne({ _id: albumId });
-    const userRating = await Rating.findOne({ topicId: albumId, userId });
+    const userId = req.user._id;
+    const album = await Album.findOne({ slug });
+
+    if (!album) {
+      throw new Error("Album not found");
+    }
+
+    const userRating = await Rating.findOne({ topicSlug: slug, userId });
 
     if (userRating) {
       userRating.rating = rating;
@@ -196,13 +217,14 @@ router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
     } else {
       await Rating.create({
         topic: Topic.Album,
-        topicId: albumId,
+        topicId: album._id,
+        topicSlug: slug,
         userId,
         rating,
       });
     }
 
-    const albumRatings = await Rating.find({ topicId: albumId });
+    const albumRatings = await Rating.find({ topicSlug: slug });
     album.updateRating(albumRatings);
     await album.save();
 
@@ -218,19 +240,26 @@ router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
 });
 
 router.delete(
-  "/removeRating/:id",
+  "/removeRating/:slug",
   identifyUser,
   authenticate,
   async (req, res) => {
     try {
-      const albumId = req.params.id;
+      const { slug } = req.params;
       const userId = req.user._id;
-      const album = await Album.findOne({ _id: albumId });
-      await Rating.findOneAndDelete({ topicId: albumId, userId });
+      const album = await Album.findOne({ slug });
 
-      const albumRatings = await Rating.find({ topicId: albumId });
+      if (!album) {
+        throw new Error("Album not found");
+      }
+
+      await Rating.findOneAndDelete({ topicSlug: slug, userId });
+
+      const albumRatings = await Rating.find({ topicSlug: slug });
       album.updateRating(albumRatings);
       await album.save();
+
+      album.rating = +album.rating.toFixed(1);
 
       res.status(200).send({ album });
     } catch (e) {
