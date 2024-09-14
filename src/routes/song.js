@@ -46,21 +46,26 @@ router.get("/mostRatedSongs", async (req, res) => {
   }
 });
 
-router.get("/overview/:id", async (req, res) => {
+router.get("/overview/:slug", async (req, res) => {
   try {
-    const { id } = req.params;
-    const song = await Song.findOne({ _id: id }).lean();
+    const { slug } = req.params;
+    const song = await Song.findOne({ slug }).lean();
+
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
     const ratingCount = await Rating.countDocuments({ topicId: song._id });
     const addedByUser = await User.findById(song.addedByUserId).lean();
 
     const overview = {
       artist: {
         name: song.artistRefName,
-        _id: song.artistRefObjectId,
+        slug: song.artistRefSlug,
       },
       album: {
         name: song.albumRefName,
-        _id: song.albumRefObjectId,
+        slug: song.albumRefSlug,
       },
       ratingCount,
       releaseDate: song.releaseDate,
@@ -78,10 +83,10 @@ router.get("/overview/:id", async (req, res) => {
   }
 });
 
-router.get("/similarSongs/:id", async (req, res) => {
+router.get("/similarSongs/:slug", async (req, res) => {
   try {
-    const { id } = req.params;
-    const song = await Song.findOne({ _id: id });
+    const { slug } = req.params;
+    const song = await Song.findOne({ slug });
 
     const similarSongs = await Song.find({
       _id: { $ne: song._id },
@@ -98,10 +103,16 @@ router.get("/similarSongs/:id", async (req, res) => {
   }
 });
 
-router.get("/ratings/:id", async (req, res) => {
+router.get("/ratings/:slug", async (req, res) => {
   try {
-    const songId = req.params.id;
-    const ratings = await Rating.find({ topicId: songId });
+    const { slug } = req.params;
+    const song = await Song.findOne({ slug });
+
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
+    const ratings = await Rating.find({ topicId: song._id });
     const userIds = ratings.map((rating) => rating.userId);
     const users = await User.find({ _id: { $in: userIds } });
 
@@ -137,12 +148,17 @@ router.get("/ratings/:id", async (req, res) => {
   }
 });
 
-router.get("/:id", identifyUser, async (req, res) => {
+router.get("/:slug", identifyUser, async (req, res) => {
   try {
-    const songId = req.params.id;
+    const { slug } = req.params;
     const userId = req.user._id;
-    const song = await Song.findOne({ _id: songId }).lean();
-    const userRating = await Rating.findOne({ topicId: songId, userId });
+    const song = await Song.findOne({ slug }).lean();
+
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
+    const userRating = await Rating.findOne({ topicId: song._id, userId });
 
     song.ratingOfRelevantUser = userRating?.rating;
     song.rating = +song.rating.toFixed(1);
@@ -155,26 +171,31 @@ router.get("/:id", identifyUser, async (req, res) => {
   }
 });
 
-router.post("/", identifyUser, authenticate, async (req, res) => {
-  try {
-    const song = new Song(req.body);
-    await song.save();
+// router.post("/", identifyUser, authenticate, async (req, res) => {
+//   try {
+//     const song = new Song(req.body);
+//     await song.save();
 
-    res.status(201).send(song);
-  } catch (e) {
-    res.status(400).json({
-      message: e.message,
-    });
-  }
-});
+//     res.status(201).send(song);
+//   } catch (e) {
+//     res.status(400).json({
+//       message: e.message,
+//     });
+//   }
+// });
 
-router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
+router.post("/rate/:slug", identifyUser, authenticate, async (req, res) => {
   try {
-    const songId = req.params.id;
-    const userId = req.user._id;
+    const { slug } = req.params;
     const { rating } = req.body;
-    const song = await Song.findOne({ _id: songId });
-    const userRating = await Rating.findOne({ topicId: songId, userId });
+    const userId = req.user._id;
+    const song = await Song.findOne({ slug });
+
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
+    const userRating = await Rating.findOne({ topicSlug: slug, userId });
 
     if (userRating) {
       userRating.rating = rating;
@@ -182,13 +203,14 @@ router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
     } else {
       await Rating.create({
         topic: Topic.Song,
-        topicId: songId,
+        topicId: song._id,
+        topicSlug: slug,
         userId,
         rating,
       });
     }
 
-    const songRatings = await Rating.find({ topicId: songId });
+    const songRatings = await Rating.find({ topicSlug: slug });
     song.updateRating(songRatings);
     await song.save();
 
@@ -204,19 +226,26 @@ router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
 });
 
 router.delete(
-  "/removeRating/:id",
+  "/removeRating/:slug",
   identifyUser,
   authenticate,
   async (req, res) => {
     try {
-      const songId = req.params.id;
+      const { slug } = req.params;
       const userId = req.user._id;
-      const song = await Song.findOne({ _id: songId });
-      await Rating.findOneAndDelete({ topicId: songId, userId });
+      const song = await Song.findOne({ slug });
 
-      const songRatings = await Rating.find({ topicId: songId });
+      if (!song) {
+        throw new Error("Song not found");
+      }
+
+      await Rating.findOneAndDelete({ topicSlug: slug, userId });
+
+      const songRatings = await Rating.find({ topicSlug: slug });
       song.updateRating(songRatings);
       await song.save();
+
+      song.rating = +song.rating.toFixed(1);
 
       res.status(200).send({ song });
     } catch (e) {

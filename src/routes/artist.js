@@ -50,12 +50,17 @@ router.get("/mostRatedArtists", async (req, res) => {
   }
 });
 
-router.get("/overview/:id", async (req, res) => {
+router.get("/overview/:slug", async (req, res) => {
   try {
-    const { id } = req.params;
-    const artist = await Artist.findOne({ _id: id }).lean();
-    const albumCount = await Album.countDocuments({ artistRefObjectId: artist._id });
-    const songCount = await Song.countDocuments({ artistRefObjectId: artist._id });
+    const { slug } = req.params;
+    const artist = await Artist.findOne({ slug }).lean();
+
+    if (!artist) {
+      throw new Error("Artist not found");
+    }
+
+    const albumCount = await Album.countDocuments({ artistRefSlug: artist.slug });
+    const songCount = await Song.countDocuments({ artistRefSlug: artist.slug });
     const ratingCount = await Rating.countDocuments({ topicId: artist._id });
     const addedByUser = await User.findById(artist.addedByUserId).lean();
 
@@ -80,10 +85,10 @@ router.get("/overview/:id", async (req, res) => {
   }
 });
 
-router.get("/similarArtists/:id", async (req, res) => {
+router.get("/similarArtists/:slug", async (req, res) => {
   try {
-    const { id } = req.params;
-    const artist = await Artist.findOne({ _id: id });
+    const { slug } = req.params;
+    const artist = await Artist.findOne({ slug });
 
     const similarArtists = await Artist.find({
       _id: { $ne: artist._id },
@@ -100,10 +105,16 @@ router.get("/similarArtists/:id", async (req, res) => {
   }
 });
 
-router.get("/ratings/:id", async (req, res) => {
+router.get("/ratings/:slug", async (req, res) => {
   try {
-    const artistId = req.params.id;
-    const ratings = await Rating.find({ topicId: artistId });
+    const { slug } = req.params;
+    const artist = await Artist.findOne({ slug });
+
+    if (!artist) {
+      throw new Error("Artist not found");
+    }
+
+    const ratings = await Rating.find({ topicId: artist._id });
     const userIds = ratings.map((rating) => rating.userId);
     const users = await User.find({ _id: { $in: userIds } });
 
@@ -139,12 +150,17 @@ router.get("/ratings/:id", async (req, res) => {
   }
 });
 
-router.get("/:id", identifyUser, async (req, res) => {
+router.get("/:slug", identifyUser, async (req, res) => {
   try {
-    const artistId = req.params.id;
+    const { slug } = req.params;
     const userId = req.user._id;
-    const artist = await Artist.findOne({ _id: artistId }).lean();
-    const userRating = await Rating.findOne({ topicId: artistId, userId });
+    const artist = await Artist.findOne({ slug }).lean();
+
+    if (!artist) {
+      throw new Error("Artist not found");
+    }
+
+    const userRating = await Rating.findOne({ topicId: artist._id, userId });
 
     artist.ratingOfRelevantUser = userRating?.rating;
     artist.rating = +artist.rating.toFixed(1);
@@ -157,39 +173,44 @@ router.get("/:id", identifyUser, async (req, res) => {
   }
 });
 
-router.post(
-  "/",
-  identifyUser,
-  authenticate,
-  upload.single("image"),
-  async (req, res) => {
-    try {
-      const artistInfo = JSON.parse(req.body.artistInfo);
-      const imageResult = await cloudinary.uploader.upload(req.file.path);
+// router.post(
+//   "/",
+//   identifyUser,
+//   authenticate,
+//   upload.single("image"),
+//   async (req, res) => {
+//     try {
+//       const artistInfo = JSON.parse(req.body.artistInfo);
+//       const imageResult = await cloudinary.uploader.upload(req.file.path);
 
-      const artist = new Artist({
-        ...artistInfo,
-        image: imageResult.secure_url,
-        cloudinaryId: imageResult.public_id,
-      });
-      await artist.save();
+//       const artist = new Artist({
+//         ...artistInfo,
+//         image: imageResult.secure_url,
+//         cloudinaryId: imageResult.public_id,
+//       });
+//       await artist.save();
 
-      res.status(201).send(artist);
-    } catch (e) {
-      res.status(400).json({
-        message: e.message,
-      });
-    }
-  }
-);
+//       res.status(201).send(artist);
+//     } catch (e) {
+//       res.status(400).json({
+//         message: e.message,
+//       });
+//     }
+//   }
+// );
 
-router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
+router.post("/rate/:slug", identifyUser, authenticate, async (req, res) => {
   try {
-    const artistId = req.params.id;
-    const userId = req.user._id;
+    const { slug } = req.params;
     const { rating } = req.body;
-    const artist = await Artist.findOne({ _id: artistId });
-    const userRating = await Rating.findOne({ topicId: artistId, userId });
+    const userId = req.user._id;
+    const artist = await Artist.findOne({ slug });
+
+    if (!artist) {
+      throw new Error("Artist not found");
+    }
+
+    const userRating = await Rating.findOne({ topicSlug: slug, userId });
 
     if (userRating) {
       userRating.rating = rating;
@@ -197,13 +218,14 @@ router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
     } else {
       await Rating.create({
         topic: Topic.Artist,
-        topicId: artistId,
+        topicId: artist._id,
+        topicSlug: slug,
         userId,
         rating,
       });
     }
 
-    const artistRatings = await Rating.find({ topicId: artistId });
+    const artistRatings = await Rating.find({ topicSlug: slug });
     artist.updateRating(artistRatings);
     await artist.save();
 
@@ -219,19 +241,26 @@ router.post("/rate/:id", identifyUser, authenticate, async (req, res) => {
 });
 
 router.delete(
-  "/removeRating/:id",
+  "/removeRating/:slug",
   identifyUser,
   authenticate,
   async (req, res) => {
     try {
-      const artistId = req.params.id;
+      const { slug } = req.params;
       const userId = req.user._id;
-      const artist = await Artist.findOne({ _id: artistId });
-      await Rating.findOneAndDelete({ topicId: artistId, userId });
+      const artist = await Artist.findOne({ slug });
 
-      const artistRatings = await Rating.find({ topicId: artistId });
+      if (!artist) {
+        throw new Error("Artist not found");
+      }
+
+      await Rating.findOneAndDelete({ topicSlug: slug, userId });
+
+      const artistRatings = await Rating.find({ topicSlug: slug });
       artist.updateRating(artistRatings);
       await artist.save();
+
+      artist.rating = +artist.rating.toFixed(1);
 
       res.status(200).send({ artist });
     } catch (e) {

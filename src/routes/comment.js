@@ -1,16 +1,20 @@
 const router = require("express").Router();
+const Topic = require("../constants/topic");
 const Comment = require("../db/models/Comment");
 const User = require("../db/models/User");
+const Artist = require("../db/models/Artist");
+const Album = require("../db/models/Album");
+const Song = require("../db/models/Song");
 const authenticate = require("../middlewares/authenticate");
 const identifyUser = require("../middlewares/identifyUser");
 
-router.get("/:topic/:topicId", async (req, res) => {
+router.get("/:topic/:topicSlug", async (req, res) => {
   try {
-    const topicId = req.params.topicId;
+    const topicSlug = req.params.topicSlug;
     let topic = req.params.topic;
     topic = topic.charAt(0).toUpperCase() + topic.slice(1);
 
-    const comments = await Comment.find({ topic, topicId }).sort({
+    const comments = await Comment.find({ topic, topicSlug }).sort({
       createdAt: -1,
     }).lean();
 
@@ -37,15 +41,25 @@ router.get("/:topic/:topicId", async (req, res) => {
 
 router.post("/", identifyUser, authenticate, async (req, res) => {
   try {
-    const { topic, topicId, content } = req.body;
+    const { topic, topicSlug, content } = req.body;
+    let topicData;
+
+    if (topic === Topic.Artist) {
+      topicData = await Artist.findOne({ slug: topicSlug });
+    } else if (topic === Topic.Album) {
+      topicData = await Album.findOne({ slug: topicSlug });
+    } else if (topic === Topic.Song) {
+      topicData = await Song.findOne({ slug: topicSlug });
+    }
 
     if (!content) {
-      throw new Error("No comment written.");
+      throw new Error("No comment written");
     }
 
     const comment = new Comment({
       topic,
-      topicId,
+      topicId: topicData._id,
+      topicSlug,
       content,
       userId: req.user._id,
     });
@@ -72,7 +86,7 @@ router.delete("/:id", identifyUser, authenticate, async (req, res) => {
     const comment = await Comment.findOne({ _id: commentId, userId: req.user._id });
 
     if (!comment) {
-      throw new Error("Comment not found.");
+      throw new Error("Comment not found");
     }
 
     const removedComment = await Comment.findByIdAndDelete(commentId);

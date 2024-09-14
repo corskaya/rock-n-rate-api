@@ -18,6 +18,10 @@ const RatingSchema = new mongoose.Schema(
       type: ObjectId,
       required: true,
     },
+    topicSlug: {
+      type: String,
+      required: true,
+    },
     userId: {
       type: ObjectId,
       required: true,

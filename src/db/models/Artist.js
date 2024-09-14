@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const genres = require("../../constants/genres");
 const countries = require("../../constants/countries");
 const { ObjectId } = mongoose.Schema.Types;
+const slugify = require("../../utils/slugify");
 
 const SocialSchema = new mongoose.Schema({
   spotify: {
@@ -21,6 +22,11 @@ const ArtistSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
     },
     rating: {
       type: Number,
@@ -64,6 +70,22 @@ const ArtistSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+ArtistSchema.pre("save", async function (next) {
+  if (this.isModified("name")) {
+    let slug = slugify(this.name);
+    let uniqueSlug = slug;
+    let count = 1;
+
+    while (await mongoose.models.Artist.exists({ slug: uniqueSlug })) {
+      uniqueSlug = `${slug}-${count}`;
+      count++;
+    }
+
+    this.slug = uniqueSlug;
+  }
+  next();
+});
 
 ArtistSchema.methods.updateRating = function (ratings) {
   this.ratingCount = ratings.length;
