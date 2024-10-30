@@ -74,6 +74,13 @@ const SongSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+SongSchema.methods.toJSON = function () {
+  const song = this;
+  const songObject = song.toObject();
+  songObject.rating = +songObject.rating.toFixed(1);
+  return songObject;
+};
+
 SongSchema.pre("save", async function (next) {
   if (this.isModified("name")) {
     let slug = slugify(this.name);

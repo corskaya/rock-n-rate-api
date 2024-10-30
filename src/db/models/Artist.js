@@ -71,6 +71,13 @@ const ArtistSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+ArtistSchema.methods.toJSON = function () {
+  const artist = this;
+  const artistObject = artist.toObject();
+  artistObject.rating = +artistObject.rating.toFixed(1);
+  return artistObject;
+};
+
 ArtistSchema.pre("save", async function (next) {
   if (this.isModified("name")) {
     let slug = slugify(this.name);
