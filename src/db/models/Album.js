@@ -69,6 +69,13 @@ const AlbumSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+AlbumSchema.methods.toJSON = function () {
+  const album = this;
+  const albumObject = album.toObject();
+  albumObject.rating = +albumObject.rating.toFixed(1);
+  return albumObject;
+};
+
 AlbumSchema.pre("save", async function (next) {
   if (this.isModified("name")) {
     let slug = slugify(this.name);

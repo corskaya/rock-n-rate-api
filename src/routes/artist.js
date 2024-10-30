@@ -150,6 +150,21 @@ router.get("/ratings/:slug", async (req, res) => {
   }
 });
 
+router.get("/albums/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const albums = await Album.find({ artistRefSlug: slug }).sort({
+      releaseDate: -1,
+    });
+
+    res.status(200).send({ albums });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 router.get("/:slug", identifyUser, async (req, res) => {
   try {
     const { slug } = req.params;
