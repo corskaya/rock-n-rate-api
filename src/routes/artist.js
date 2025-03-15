@@ -59,7 +59,9 @@ router.get("/overview/:slug", async (req, res) => {
       throw new Error("Artist not found");
     }
 
-    const albumCount = await Album.countDocuments({ artistRefSlug: artist.slug });
+    const albumCount = await Album.countDocuments({
+      artistRefSlug: artist.slug,
+    });
     const songCount = await Song.countDocuments({ artistRefSlug: artist.slug });
     const ratingCount = await Rating.countDocuments({ topicId: artist._id });
     const addedByUser = await User.findById(artist.addedByUserId).lean();
@@ -158,6 +160,32 @@ router.get("/albums/:slug", async (req, res) => {
     });
 
     res.status(200).send({ albums });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
+router.get("/albumsWithSongs/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const songs = await Song.find({ artistRefSlug: slug }).lean();
+
+    const albumIds = songs.map((song) => song.albumRefObjectId);
+    const uniqueAlbumIds = [...new Set(albumIds)];
+    const albums = await Album.find({ _id: { $in: uniqueAlbumIds } }).sort({
+      releaseDate: -1,
+    }).lean();
+
+    const albumsWithSongs = [...albums];
+    albumsWithSongs.forEach((album) => {
+      album.songs = songs.filter(
+        (song) => song.albumRefObjectId.toString() === album._id.toString()
+      );
+    });
+
+    res.status(200).send({ albumsWithSongs });
   } catch (e) {
     res.status(400).json({
       message: e.message,
