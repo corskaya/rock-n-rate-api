@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Album = require("../db/models/Album");
+// const Artist = require("../db/models/Artist");
 const Song = require("../db/models/Song");
 const Rating = require("../db/models/Rating");
 const User = require("../db/models/User");
@@ -149,6 +150,19 @@ router.get("/ratings/:slug", async (req, res) => {
   }
 });
 
+router.get("/songs/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const songs = await Song.find({ albumRefSlug: slug }).lean();
+
+    res.status(200).send({ songs });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+    });
+  }
+});
+
 router.get("/:slug", identifyUser, async (req, res) => {
   try {
     const { slug } = req.params;
@@ -160,7 +174,7 @@ router.get("/:slug", identifyUser, async (req, res) => {
     }
 
     const userRating = await Rating.findOne({ topicId: album._id, userId });
-
+    
     album.ratingOfRelevantUser = userRating?.rating;
     album.rating = +album.rating.toFixed(1);
 
@@ -180,10 +194,14 @@ router.get("/:slug", identifyUser, async (req, res) => {
 //   async (req, res) => {
 //     try {
 //       const albumInfo = JSON.parse(req.body.albumInfo);
+//       const artist = await Artist.findOne({ slug: albumInfo.artistRefSlug });
 //       const imageResult = await cloudinary.uploader.upload(req.file.path);
 
 //       const album = new Album({
 //         ...albumInfo,
+//         artistRefObjectId: artist._id,
+//         artistRefName: artist.name,
+//         addedByUserId: req.user._id,
 //         image: imageResult.secure_url,
 //         cloudinaryId: imageResult.public_id,
 //       });
@@ -260,7 +278,7 @@ router.delete(
       await album.save();
 
       album.rating = +album.rating.toFixed(1);
-
+      
       res.status(200).send({ album });
     } catch (e) {
       res.status(400).json({
