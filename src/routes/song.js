@@ -6,6 +6,8 @@ const { Topic } = require("../db/models/Rating");
 const authenticate = require("../middlewares/authenticate");
 const paginateSongs = require("../middlewares/paginateSongs");
 const identifyUser = require("../middlewares/identifyUser");
+// const Artist = require("../db/models/Artist");
+// const Album = require("../db/models/Album");
 
 router.get("/", paginateSongs, async (req, res) => {
   try {
@@ -162,6 +164,7 @@ router.get("/:slug", identifyUser, async (req, res) => {
 
     song.ratingOfRelevantUser = userRating?.rating;
     song.rating = +song.rating.toFixed(1);
+    song.about = song.about[req.lang];
 
     res.status(200).send({ song });
   } catch (e) {
@@ -173,7 +176,31 @@ router.get("/:slug", identifyUser, async (req, res) => {
 
 // router.post("/", identifyUser, authenticate, async (req, res) => {
 //   try {
-//     const song = new Song(req.body);
+//     const songInfo = req.body;
+//     const album = await Album.findOne({ slug: songInfo.albumRefSlug });
+//     const artist = await Artist.findOne({ slug: album.artistRefSlug });
+//     let name;
+
+//     if (req.body.name.includes(" - ")) {
+//       name = req.body.name.split(" - ")[0];
+//     } else {
+//       name = req.body.name;
+//     }
+
+//     const song = new Song({
+//       name,
+//       albumRefSlug: req.body.albumRefSlug,
+//       slug: "test",
+//       genres: album.genres,
+//       artistRefObjectId: artist._id,
+//       artistRefName: artist.name,
+//       artistRefSlug: artist.slug,
+//       albumRefObjectId: album._id,
+//       albumRefName: album.name,
+//       releaseDate: album.releaseDate,
+//       addedByUserId: req.user._id,
+//       image: album.image,
+//     });
 //     await song.save();
 
 //     res.status(201).send(song);
@@ -216,6 +243,7 @@ router.post("/rate/:slug", identifyUser, authenticate, async (req, res) => {
 
     song._doc.ratingOfRelevantUser = rating;
     song.rating = +song.rating.toFixed(1);
+    song._doc.about = song._doc.about[req.lang];
 
     res.status(200).send({ song });
   } catch (e) {
@@ -246,6 +274,7 @@ router.delete(
       await song.save();
 
       song.rating = +song.rating.toFixed(1);
+      song._doc.about = song._doc.about[req.lang];
 
       res.status(200).send({ song });
     } catch (e) {

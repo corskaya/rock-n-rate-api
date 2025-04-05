@@ -37,7 +37,8 @@ const ArtistSchema = new mongoose.Schema(
       default: 0,
     },
     about: {
-      type: String,
+      en: { type: String },
+      tr: { type: String },
     },
     genres: {
       type: [String],
