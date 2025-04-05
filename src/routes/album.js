@@ -177,6 +177,7 @@ router.get("/:slug", identifyUser, async (req, res) => {
     
     album.ratingOfRelevantUser = userRating?.rating;
     album.rating = +album.rating.toFixed(1);
+    album.about = album.about[req.lang];
 
     res.status(200).send({ album });
   } catch (e) {
@@ -248,6 +249,7 @@ router.post("/rate/:slug", identifyUser, authenticate, async (req, res) => {
 
     album._doc.ratingOfRelevantUser = rating;
     album.rating = +album.rating.toFixed(1);
+    album._doc.about = album._doc.about[req.lang];
 
     res.status(200).send({ album });
   } catch (e) {
@@ -278,6 +280,7 @@ router.delete(
       await album.save();
 
       album.rating = +album.rating.toFixed(1);
+      album._doc.about = album._doc.about[req.lang];
       
       res.status(200).send({ album });
     } catch (e) {

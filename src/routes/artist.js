@@ -207,6 +207,7 @@ router.get("/:slug", identifyUser, async (req, res) => {
 
     artist.ratingOfRelevantUser = userRating?.rating;
     artist.rating = +artist.rating.toFixed(1);
+    artist.about = artist.about[req.lang];
 
     res.status(200).send({ artist });
   } catch (e) {
@@ -274,6 +275,7 @@ router.post("/rate/:slug", identifyUser, authenticate, async (req, res) => {
 
     artist._doc.ratingOfRelevantUser = rating;
     artist.rating = +artist.rating.toFixed(1);
+    artist._doc.about = artist._doc.about[req.lang];
 
     res.status(200).send({ artist });
   } catch (e) {
@@ -304,6 +306,7 @@ router.delete(
       await artist.save();
 
       artist.rating = +artist.rating.toFixed(1);
+      artist._doc.about = artist._doc.about[req.lang];
 
       res.status(200).send({ artist });
     } catch (e) {
